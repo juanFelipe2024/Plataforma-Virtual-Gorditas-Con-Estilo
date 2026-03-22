@@ -1,3 +1,4 @@
+usuario
 {
   _id: ObjectId,
   nombre: String,
@@ -8,6 +9,7 @@
   fechaRegistro: Date
 }
 
+producto
 {
   _id: ObjectId,
   nombre: String,
@@ -21,6 +23,7 @@
   fechaCreacion: Date
 }
 
+orden
 {
   _id: ObjectId,
   usuario: ObjectId,
@@ -37,6 +40,7 @@
   fecha: Date
 }
 
+carrito
 {
   _id: ObjectId,
   usuario: ObjectId,
