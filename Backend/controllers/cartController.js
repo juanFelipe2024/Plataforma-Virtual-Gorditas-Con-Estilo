@@ -1,6 +1,7 @@
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 const Order = require("../models/Order");
+const { enviarConfirmacion } = require("../services/whatsappService");
 
 // Agregar un producto al carrito
 exports.agregarAlCarrito = async (req, res) => {
@@ -147,6 +148,11 @@ exports.confirmarCompra = async (req, res) => {
 
         carrito.productos = [];
         await carrito.save();
+
+        const usuario = await require("../models/User").findById(usuarioId);
+        if (usuario && usuario.telefono) {
+            await enviarConfirmacion(usuario.telefono, pedido);
+}
 
         res.status(201).json({
             message: "Compra confirmada correctamente",
