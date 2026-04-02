@@ -391,3 +391,18 @@ body {
 .btn-eliminar-producto:hover {
     background-color: #ffcdd2;
 }
+
+.select-talla {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.select-talla:focus {
+    border-color: #c2185b;
+}

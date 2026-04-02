@@ -6,7 +6,7 @@ const { enviarConfirmacion } = require("../services/whatsappService");
 // Agregar un producto al carrito
 exports.agregarAlCarrito = async (req, res) => {
     try {
-        const { productoId, cantidad } = req.body;
+        const { productoId, cantidad, talla } = req.body;
         const usuarioId = req.usuario.id;
 
         let carrito = await Cart.findOne({ usuario: usuarioId });
@@ -14,17 +14,17 @@ exports.agregarAlCarrito = async (req, res) => {
         if (!carrito) {
             carrito = new Cart({
                 usuario: usuarioId,
-                productos: [{ productoId, cantidad }]
+                productos: [{ productoId, cantidad, talla }]
             });
         } else {
             const productoExistente = carrito.productos.find(
-                p => p.productoId.toString() === productoId
+                p => p.productoId.toString() === productoId && p.talla === talla
             );
 
             if (productoExistente) {
                 productoExistente.cantidad += cantidad;
             } else {
-                carrito.productos.push({ productoId, cantidad });
+                carrito.productos.push({ productoId, cantidad, talla });
             }
         }
 
@@ -71,6 +71,7 @@ exports.eliminarDelCarrito = async (req, res) => {
     try {
         const usuarioId = req.usuario.id;
         const { productoId } = req.params;
+        const { talla } = req.query;
 
         const carrito = await Cart.findOne({ usuario: usuarioId });
 
@@ -81,7 +82,7 @@ exports.eliminarDelCarrito = async (req, res) => {
         }
 
         carrito.productos = carrito.productos.filter(
-            p => p.productoId.toString() !== productoId
+            p => !(p.productoId.toString() === productoId && p.talla === talla)
         );
 
         await carrito.save();

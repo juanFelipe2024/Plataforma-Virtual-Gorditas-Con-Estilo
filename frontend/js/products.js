@@ -38,7 +38,15 @@ async function cargarProductos() {
                 <div class="producto-info">
                     <p class="producto-nombre">${producto.nombre}</p>
                     <p class="producto-precio">$${producto.precio.toLocaleString()}</p>
-                    <p class="producto-tallas">Tallas: ${producto.tallas.join(", ")}</p>
+                    <div class="form-group">
+                        <label>Talla</label>
+                        <select id="talla-${producto._id}" class="select-talla">
+                            <option value="">Selecciona una talla</option>
+                            ${producto.tallas.map(t => `
+                                <option value="${t}">${t}</option>
+                            `).join("")}
+                        </select>
+                    </div>
                     <button class="btn-agregar" onclick="agregarAlCarrito('${producto._id}')">
                         Agregar al carrito
                     </button>
@@ -59,6 +67,14 @@ async function agregarAlCarrito(productoId) {
         return;
     }
 
+    const selectTalla = document.getElementById(`talla-${productoId}`);
+    const talla = selectTalla.value;
+
+    if (!talla) {
+        alert("Por favor selecciona una talla");
+        return;
+    }
+
     try {
         const response = await fetch(`${API_URL}/cart`, {
             method: "POST",
@@ -66,7 +82,7 @@ async function agregarAlCarrito(productoId) {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`
             },
-            body: JSON.stringify({ productoId, cantidad: 1 })
+            body: JSON.stringify({ productoId, cantidad: 1, talla })
         });
 
         const data = await response.json();

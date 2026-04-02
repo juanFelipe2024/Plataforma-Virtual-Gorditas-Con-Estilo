@@ -12,6 +12,10 @@ const cartSchema = new mongoose.Schema({
                 type: mongoose.Schema.Types.ObjectId,
                 ref: "Product"
             },
+            talla: {
+                type: String,
+                required: true
+            },
             cantidad: {
                 type: Number,
                 required: true,

@@ -59,10 +59,10 @@ async function cargarCarrito() {
                     <div class="carrito-item-info">
                         <p class="carrito-item-nombre">${item.productoId.nombre}</p>
                         <p class="carrito-item-precio">$${item.productoId.precio.toLocaleString()}</p>
-                        <p class="carrito-item-cantidad">Cantidad: ${item.cantidad}</p>
+                        <p class="carrito-item-cantidad">Talla: ${item.talla} - Cantidad: ${item.cantidad}</p>
                     </div>
                     <button class="btn-eliminar" 
-                        onclick="eliminarDelCarrito('${item.productoId._id}')">
+                        onclick="eliminarDelCarrito('${item.productoId._id}', '${item.talla}')">
                         Eliminar
                     </button>
                 </div>
@@ -77,11 +77,11 @@ async function cargarCarrito() {
     }
 }
 
-async function eliminarDelCarrito(productoId) {
+async function eliminarDelCarrito(productoId, talla) {
     const token = localStorage.getItem("token");
 
     try {
-        const response = await fetch(`${API_URL}/cart/${productoId}`, {
+        const response = await fetch(`${API_URL}/cart/${productoId}?talla=${talla}`, {
             method: "DELETE",
             headers: { "Authorization": `Bearer ${token}` }
         });
