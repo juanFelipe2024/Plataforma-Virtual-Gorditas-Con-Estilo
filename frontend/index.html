@@ -18,7 +18,16 @@
     </nav>
 
     <main class="container">
-        <h2 class="section-title">Nuestras prendas</h2>
+        <div class="categorias-bar">
+            <button class="categoria-btn activa" onclick="filtrarCategoria('todas')">Todas</button>
+            <button class="categoria-btn" onclick="filtrarCategoria('Blusas')">Blusas</button>
+            <button class="categoria-btn" onclick="filtrarCategoria('Pantalones')">Pantalones</button>
+            <button class="categoria-btn" onclick="filtrarCategoria('Conjuntos')">Conjuntos</button>
+            <button class="categoria-btn" onclick="filtrarCategoria('Faldas')">Faldas</button>
+            <button class="categoria-btn" onclick="filtrarCategoria('Shorts')">Shorts</button>
+            <button class="categoria-btn" onclick="filtrarCategoria('Vestidos')">Vestidos</button>
+        </div>
+        <h2 class="section-title" id="titulo-categoria">Nuestras prendas</h2>
         <div id="productos-grid" class="productos-grid"></div>
     </main>
 
