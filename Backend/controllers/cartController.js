@@ -103,6 +103,7 @@ exports.eliminarDelCarrito = async (req, res) => {
 exports.confirmarCompra = async (req, res) => {
     try {
         const usuarioId = req.usuario.id;
+        const metodoPago = req.body.metodoPago || "No especificado";
 
         const carrito = await Cart.findOne({ usuario: usuarioId })
             .populate("productos.productoId");
@@ -152,7 +153,7 @@ exports.confirmarCompra = async (req, res) => {
 
         const usuario = await require("../models/User").findById(usuarioId);
         if (usuario && usuario.telefono) {
-            await enviarConfirmacion(usuario.telefono, pedido);
+            await enviarConfirmacion(usuario.telefono, pedido, metodoPago);
 }
 
         res.status(201).json({

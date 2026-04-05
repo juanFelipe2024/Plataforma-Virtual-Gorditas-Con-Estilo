@@ -5,13 +5,28 @@ const client = twilio(
     process.env.TWILIO_AUTH_TOKEN
 );
 
-exports.enviarConfirmacion = async (telefono, pedido) => {
+exports.enviarConfirmacion = async (telefono, pedido, metodoPago) => {
     try {
         const productos = pedido.productos
-            .map(p => `- ${p.nombre} x${p.cantidad}: $${(p.precio * p.cantidad).toLocaleString()}`)
+            .map(p => `• ${p.nombre} x${p.cantidad} — $${(p.precio * p.cantidad).toLocaleString()}`)
             .join("\n");
 
-        const mensaje = `¡Hola! Tu pedido en *Gorditas con Estilo* ha sido confirmado ✅\n\n${productos}\n\n*Total: $${pedido.total.toLocaleString()}*\n\nGracias por tu compra 🛍️`;
+        const metodoTexto = metodoPago === "tarjeta"
+            ? "Tarjeta de crédito/débito"
+            : metodoPago === "transferencia"
+            ? "Transferencia bancaria"
+            : "No especificado";
+
+        const mensaje =
+`¡Hola! Tu pedido en *Gorditas con Estilo* ha sido confirmado ✅
+
+*Productos:*
+${productos}
+
+*Total pagado:* $${pedido.total.toLocaleString()}
+*Método de pago:* ${metodoTexto}
+
+Gracias por tu compra, pronto recibirás tu pedido 🛍️`;
 
         await client.messages.create({
             from: process.env.TWILIO_WHATSAPP_FROM,
