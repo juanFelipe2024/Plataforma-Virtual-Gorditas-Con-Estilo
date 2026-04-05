@@ -28,15 +28,15 @@ ${productos}
 
 Gracias por tu compra, pronto recibirás tu pedido 🛍️`;
 
-        await client.messages.create({
+        const result = await client.messages.create({
             from: process.env.TWILIO_WHATSAPP_FROM,
             to: `whatsapp:+57${telefono}`,
             body: mensaje
         });
 
-        console.log(`WhatsApp enviado a ${telefono}`);
+        console.log("✅ WhatsApp enviado, SID:", result.sid);
 
     } catch (error) {
-        console.error("Error al enviar WhatsApp:", error.message);
+        console.error("❌ Error Twilio:", error.message);
     }
 };
