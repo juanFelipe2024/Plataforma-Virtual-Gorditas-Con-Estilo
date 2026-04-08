@@ -6,7 +6,7 @@
     <title>Gorditas con Estilo</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
-<body>
+<body class="page-home">
 
     <nav class="navbar">
         <div class="navbar-brand">Gorditas con Estilo</div>
@@ -18,14 +18,25 @@
     </nav>
 
     <main class="container">
+        <section class="hero-home">
+            <p class="hero-kicker">Coleccion Nueva</p>
+            <h1>Moda con actitud, hecha para celebrar tu estilo</h1>
+            <p class="hero-copy">Descubre prendas comodas, versatiles y con cortes pensados para que te sientas increible todos los dias.</p>
+            <div class="hero-pills">
+                <span>Envios rapidos</span>
+                <span>Tallas reales</span>
+                <span>Compra segura</span>
+            </div>
+        </section>
+
         <div class="categorias-bar">
-            <button class="categoria-btn activa" onclick="filtrarCategoria('todas')">Todas</button>
-            <button class="categoria-btn" onclick="filtrarCategoria('Blusas')">Blusas</button>
-            <button class="categoria-btn" onclick="filtrarCategoria('Pantalones')">Pantalones</button>
-            <button class="categoria-btn" onclick="filtrarCategoria('Conjuntos')">Conjuntos</button>
-            <button class="categoria-btn" onclick="filtrarCategoria('Faldas')">Faldas</button>
-            <button class="categoria-btn" onclick="filtrarCategoria('Shorts')">Shorts</button>
-            <button class="categoria-btn" onclick="filtrarCategoria('Vestidos')">Vestidos</button>
+            <button class="categoria-btn activa" onclick="filtrarCategoria('todas', this)">Todas</button>
+            <button class="categoria-btn" onclick="filtrarCategoria('Blusas', this)">Blusas</button>
+            <button class="categoria-btn" onclick="filtrarCategoria('Pantalones', this)">Pantalones</button>
+            <button class="categoria-btn" onclick="filtrarCategoria('Conjuntos', this)">Conjuntos</button>
+            <button class="categoria-btn" onclick="filtrarCategoria('Faldas', this)">Faldas</button>
+            <button class="categoria-btn" onclick="filtrarCategoria('Shorts', this)">Shorts</button>
+            <button class="categoria-btn" onclick="filtrarCategoria('Vestidos', this)">Vestidos</button>
         </div>
         <h2 class="section-title" id="titulo-categoria">Nuestras prendas</h2>
         <div id="productos-grid" class="productos-grid"></div>

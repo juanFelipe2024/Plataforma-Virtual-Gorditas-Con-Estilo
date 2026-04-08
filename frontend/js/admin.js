@@ -117,12 +117,12 @@ async function cargarPedidos() {
         const container = document.getElementById("pedidos-container");
 
         if (pedidos.length === 0) {
-            container.innerHTML = "<p style='color:#888'>No hay pedidos todavía.</p>";
+            container.innerHTML = "<p class='carrito-vacio'>No hay pedidos todavía.</p>";
             return;
         }
 
-        container.innerHTML = pedidos.map(pedido => `
-            <div class="pedido-card">
+        container.innerHTML = pedidos.map((pedido, index) => `
+            <div class="pedido-card" style="--i:${index}">
                 <div class="pedido-header">
                     <span class="pedido-cliente">
                         ${pedido.usuario.nombre} — ${pedido.usuario.email}
@@ -152,12 +152,12 @@ async function cargarProductos() {
         const container = document.getElementById("productos-container");
 
         if (productos.length === 0) {
-            container.innerHTML = "<p style='color:#888'>No hay productos en el catálogo.</p>";
+            container.innerHTML = "<p class='carrito-vacio'>No hay productos en el catálogo.</p>";
             return;
         }
 
-        container.innerHTML = productos.map(producto => `
-            <div class="admin-producto-card">
+        container.innerHTML = productos.map((producto, index) => `
+            <div class="admin-producto-card" style="--i:${index}">
                 <div class="admin-producto-info">
                     <strong>${producto.nombre}</strong>
                     <p>Precio: $${producto.precio.toLocaleString()} — Stock: ${producto.stock}</p>

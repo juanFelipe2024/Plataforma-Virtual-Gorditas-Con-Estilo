@@ -30,12 +30,12 @@ async function cargarProductos() {
     }
 }
 
-function filtrarCategoria(categoria) {
+function filtrarCategoria(categoria, boton) {
     // Actualizar botón activo
     document.querySelectorAll(".categoria-btn").forEach(btn => {
         btn.classList.remove("activa");
     });
-    event.target.classList.add("activa");
+    if (boton) boton.classList.add("activa");
 
     // Actualizar título
     const titulo = document.getElementById("titulo-categoria");
@@ -55,12 +55,12 @@ function renderProductos(productos) {
     const grid = document.getElementById("productos-grid");
 
     if (productos.length === 0) {
-        grid.innerHTML = "<p style='color:#888'>No hay productos en esta categoría.</p>";
+        grid.innerHTML = "<p class='carrito-vacio'>No hay productos en esta categoría.</p>";
         return;
     }
 
-    grid.innerHTML = productos.map(producto => `
-        <div class="producto-card" onclick="window.location.href='product.html?id=${producto._id}'" style="cursor:pointer">
+    grid.innerHTML = productos.map((producto, index) => `
+        <div class="producto-card" onclick="window.location.href='product.html?id=${producto._id}'" style="cursor:pointer; --i:${index}">
             <img src="${producto.imagen || 'img/placeholder.jpg'}" alt="${producto.nombre}">
             <div class="producto-info">
                 <p class="producto-nombre">${producto.nombre}</p>

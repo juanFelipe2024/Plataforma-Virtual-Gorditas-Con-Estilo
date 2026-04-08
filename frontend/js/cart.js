@@ -37,11 +37,11 @@ async function cargarCarrito() {
         }
 
         let total = 0;
-        itemsDiv.innerHTML = data.productos.map(item => {
+        itemsDiv.innerHTML = data.productos.map((item, index) => {
             const subtotal = item.productoId.precio * item.cantidad;
             total += subtotal;
             return `
-                <div class="carrito-item">
+                <div class="carrito-item" style="--i:${index}">
                     <div class="carrito-item-info">
                         <p class="carrito-item-nombre">${item.productoId.nombre}</p>
                         <p class="carrito-item-precio">$${item.productoId.precio.toLocaleString()}</p>
