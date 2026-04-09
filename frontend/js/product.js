@@ -3,6 +3,7 @@ const API_URL = "http://localhost:3000/api";
 document.addEventListener("DOMContentLoaded", () => {
     verificarSesion();
     cargarProducto();
+    actualizarBadgeCarrito();
     document.getElementById("nav-logout").addEventListener("click", cerrarSesion);
 });
 
@@ -119,5 +120,34 @@ async function agregarAlCarrito(productoId) {
 
     } catch (error) {
         alert("Error de conexión, intenta de nuevo");
+    }
+}
+
+async function actualizarBadgeCarrito() {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+        const response = await fetch(`${API_URL}/cart`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        const data = await response.json();
+        const badge = document.getElementById("carrito-badge");
+        if (!badge) return;
+
+        const total = data.productos
+            ? data.productos.reduce((sum, item) => sum + item.cantidad, 0)
+            : 0;
+
+        if (total > 0) {
+            badge.textContent = total;
+            badge.classList.remove("hidden");
+        } else {
+            badge.classList.add("hidden");
+        }
+
+    } catch (error) {
+        console.error("Error al obtener badge del carrito:", error);
     }
 }
