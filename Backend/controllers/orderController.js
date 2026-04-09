@@ -30,3 +30,38 @@ exports.obtenerPedidosCliente = async (req, res) => {
         });
     }
 };
+
+exports.actualizarEstadoPedido = async (req, res) => {
+    try {
+        const { estado } = req.body;
+        const estadosValidos = ["pendiente", "confirmado", "cancelado"];
+
+        if (!estadosValidos.includes(estado)) {
+            return res.status(400).json({
+                error: "Estado no válido"
+            });
+        }
+
+        const pedido = await Order.findByIdAndUpdate(
+            req.params.id,
+            { estado },
+            { new: true }
+        ).populate("usuario", "nombre email");
+
+        if (!pedido) {
+            return res.status(404).json({
+                error: "Pedido no encontrado"
+            });
+        }
+
+        res.status(200).json({
+            message: "Estado actualizado correctamente",
+            pedido
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            error: "Error al actualizar el estado del pedido"
+        });
+    }
+};

@@ -843,3 +843,154 @@ body::after {
         max-width: none;
     }
 }
+
+/* Mis pedidos */
+.pedidos-vacio {
+    text-align: center;
+    padding: 48px 0;
+    color: #888;
+    font-size: 16px;
+}
+
+.mi-pedido-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.mi-pedido-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #f3e0e8;
+}
+
+.mi-pedido-fecha {
+    font-size: 15px;
+    color: #333;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.mi-pedido-id {
+    font-size: 13px;
+    color: #aaa;
+}
+
+.estado-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.estado-pendiente {
+    background: #fff8e1;
+    color: #f57f17;
+}
+
+.estado-confirmado {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.estado-cancelado {
+    background: #fdecea;
+    color: #c62828;
+}
+
+.mi-pedido-productos {
+    padding: 16px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pedido-producto-fila {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: #444;
+}
+
+.pedido-producto-nombre {
+    flex: 1;
+}
+
+.pedido-producto-cantidad {
+    color: #888;
+    min-width: 32px;
+    text-align: center;
+}
+
+.pedido-producto-subtotal {
+    color: #c2185b;
+    font-weight: 500;
+    min-width: 80px;
+    text-align: right;
+}
+
+.mi-pedido-footer {
+    padding: 16px 24px;
+    background: #f8f0f5;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.mi-pedido-total {
+    font-size: 18px;
+    font-weight: 600;
+    color: #c2185b;
+}
+
+/* Estado de pedidos en admin */
+.pedido-estado-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f3e0e8;
+}
+
+.select-estado {
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: none;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 24px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+}
+
+.estado-pendiente {
+    background-color: #fff8e1;
+    color: #f57f17;
+}
+
+.estado-confirmado {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.estado-cancelado {
+    background-color: #fdecea;
+    color: #c62828;
+}
+
+.estado-feedback {
+    font-size: 13px;
+    color: #2e7d32;
+    font-weight: 500;
+}

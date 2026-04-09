@@ -117,28 +117,46 @@ async function cargarPedidos() {
         const container = document.getElementById("pedidos-container");
 
         if (pedidos.length === 0) {
-            container.innerHTML = "<p class='carrito-vacio'>No hay pedidos todavía.</p>";
+            container.innerHTML = "<p style='color:#888'>No hay pedidos todavía.</p>";
             return;
         }
 
-        container.innerHTML = pedidos.map((pedido, index) => `
-            <div class="pedido-card" style="--i:${index}">
-                <div class="pedido-header">
-                    <span class="pedido-cliente">
-                        ${pedido.usuario.nombre} — ${pedido.usuario.email}
-                    </span>
-                    <span class="pedido-total">$${pedido.total.toLocaleString()}</span>
+        container.innerHTML = pedidos.map(pedido => {
+            const fecha = new Date(pedido.fecha).toLocaleDateString("es-CO", {
+                year: "numeric", month: "long", day: "numeric"
+            });
+
+            return `
+                <div class="pedido-card" id="pedido-${pedido._id}">
+                    <div class="pedido-header">
+                        <div>
+                            <span class="pedido-cliente">
+                                ${pedido.usuario.nombre} — ${pedido.usuario.email}
+                            </span>
+                            <p class="pedido-fecha">${fecha}</p>
+                        </div>
+                        <span class="pedido-total">$${pedido.total.toLocaleString()}</span>
+                    </div>
+
+                    <div class="pedido-productos">
+                        ${pedido.productos.map(p =>
+                            `${p.nombre} x${p.cantidad}`
+                        ).join(", ")}
+                    </div>
+
+                    <div class="pedido-estado-row">
+                        <select
+                            class="select-estado estado-${pedido.estado}"
+                            onchange="actualizarEstado('${pedido._id}', this)">
+                            <option value="pendiente"   ${pedido.estado === "pendiente"   ? "selected" : ""}>Pendiente</option>
+                            <option value="confirmado"  ${pedido.estado === "confirmado"  ? "selected" : ""}>Confirmado</option>
+                            <option value="cancelado"   ${pedido.estado === "cancelado"   ? "selected" : ""}>Cancelado</option>
+                        </select>
+                        <span class="estado-feedback hidden" id="feedback-${pedido._id}">✓ Guardado</span>
+                    </div>
                 </div>
-                <p class="pedido-fecha">${new Date(pedido.fecha).toLocaleDateString("es-CO", {
-                    year: "numeric", month: "long", day: "numeric"
-                })}</p>
-                <div class="pedido-productos">
-                    ${pedido.productos.map(p =>
-                        `${p.nombre} x${p.cantidad}`
-                    ).join(", ")}
-                </div>
-            </div>
-        `).join("");
+            `;
+        }).join("");
 
     } catch (error) {
         console.error("Error al cargar pedidos:", error);
@@ -192,5 +210,37 @@ async function eliminarProducto(productoId) {
 
     } catch (error) {
         alert("Error de conexión, intenta de nuevo");
+    }
+}
+
+async function actualizarEstado(pedidoId, selectEl) {
+    const token = localStorage.getItem("token");
+    const nuevoEstado = selectEl.value;
+
+    // Actualizar color del select inmediatamente
+    selectEl.className = `select-estado estado-${nuevoEstado}`;
+
+    try {
+        const response = await fetch(`${API_URL}/orders/${pedidoId}/estado`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ estado: nuevoEstado })
+        });
+
+        if (response.ok) {
+            const feedback = document.getElementById(`feedback-${pedidoId}`);
+            feedback.classList.remove("hidden");
+            setTimeout(() => feedback.classList.add("hidden"), 2000);
+        } else {
+            alert("Error al actualizar el estado");
+            cargarPedidos();
+        }
+
+    } catch (error) {
+        alert("Error de conexión, intenta de nuevo");
+        cargarPedidos();
     }
 }
