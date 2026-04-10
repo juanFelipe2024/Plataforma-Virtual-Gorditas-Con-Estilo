@@ -47,10 +47,14 @@ async function cargarProducto() {
 
 function renderProducto(producto) {
     const div = document.getElementById("producto-detalle");
+    const agotado = producto.stock === 0;
 
     div.innerHTML = `
         <div class="detalle-imagen">
-            <img src="${producto.imagen || 'img/placeholder.jpg'}" alt="${producto.nombre}">
+            <div class="producto-imagen-wrapper">
+                <img src="${producto.imagen || 'img/placeholder.jpg'}" alt="${producto.nombre}">
+                ${agotado ? `<div class="etiqueta-agotado etiqueta-agotado-grande">Agotado</div>` : ""}
+            </div>
         </div>
         <div class="detalle-info">
             <h2 class="detalle-nombre">${producto.nombre}</h2>
@@ -67,20 +71,25 @@ function renderProducto(producto) {
             </div>
             <div class="detalle-fila">
                 <span class="detalle-label">Stock disponible:</span>
-                <span>${producto.stock} unidades</span>
+                <span>${agotado ? "Sin stock" : `${producto.stock} unidades`}</span>
             </div>
 
-            <div class="form-group" style="margin-top: 20px;">
-                <label>Selecciona tu talla</label>
-                <select id="talla-select" class="select-talla">
-                    <option value="">Selecciona una talla</option>
-                    ${producto.tallas.map(t => `<option value="${t}">${t}</option>`).join("")}
-                </select>
-            </div>
-
-            <button class="btn-primary" onclick="agregarAlCarrito('${producto._id}')">
-                Agregar al carrito
-            </button>
+            ${agotado ? `
+                <div class="agotado-aviso">
+                    Este producto no está disponible por el momento.
+                </div>
+            ` : `
+                <div class="form-group" style="margin-top: 20px;">
+                    <label>Selecciona tu talla</label>
+                    <select id="talla-select" class="select-talla">
+                        <option value="">Selecciona una talla</option>
+                        ${producto.tallas.map(t => `<option value="${t}">${t}</option>`).join("")}
+                    </select>
+                </div>
+                <button class="btn-primary" onclick="agregarAlCarrito('${producto._id}')">
+                    Agregar al carrito
+                </button>
+            `}
         </div>
     `;
 }

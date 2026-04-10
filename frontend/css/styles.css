@@ -1033,3 +1033,43 @@ body::after {
 .btn-editar-producto:hover {
     background: #c8ede3;
 }
+
+/* Producto agotado */
+.producto-imagen-wrapper {
+    position: relative;
+}
+
+.producto-agotado img {
+    filter: grayscale(60%);
+    opacity: 0.7;
+}
+
+.etiqueta-agotado {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: #c62828;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    letter-spacing: 0.5px;
+}
+
+.etiqueta-agotado-grande {
+    top: 16px;
+    left: 16px;
+    font-size: 14px;
+    padding: 6px 14px;
+}
+
+.agotado-aviso {
+    margin-top: 20px;
+    background: #fdecea;
+    color: #c62828;
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 14px;
+    font-weight: 500;
+}
