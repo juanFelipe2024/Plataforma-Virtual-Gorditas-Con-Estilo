@@ -1,4 +1,5 @@
 const API_URL = "http://localhost:3000/api";
+let productoEditandoId = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     verificarAdmin();
@@ -181,10 +182,16 @@ async function cargarProductos() {
                     <p>Precio: $${producto.precio.toLocaleString()} — Stock: ${producto.stock}</p>
                     <p>Tallas: ${producto.tallas.join(", ")}</p>
                 </div>
-                <button class="btn-eliminar-producto"
-                    onclick="eliminarProducto('${producto._id}')">
-                    Eliminar
-                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-editar-producto"
+                        onclick="abrirModalEditar('${producto._id}')">
+                        Editar
+                    </button>
+                    <button class="btn-eliminar-producto"
+                        onclick="eliminarProducto('${producto._id}')">
+                        Eliminar
+                    </button>
+                </div>
             </div>
         `).join("");
 
@@ -242,5 +249,117 @@ async function actualizarEstado(pedidoId, selectEl) {
     } catch (error) {
         alert("Error de conexión, intenta de nuevo");
         cargarPedidos();
+    }
+}
+
+async function abrirModalEditar(productoId) {
+    productoEditandoId = productoId;
+
+    // Limpiar mensajes previos
+    document.getElementById("editar-error").classList.add("hidden");
+    document.getElementById("editar-success").classList.add("hidden");
+
+    try {
+        const response = await fetch(`${API_URL}/products/${productoId}`);
+        const producto = await response.json();
+
+        // Precargar los datos actuales
+        document.getElementById("editar-nombre").value      = producto.nombre || "";
+        document.getElementById("editar-precio").value      = producto.precio || "";
+        document.getElementById("editar-descripcion").value = producto.descripcion || "";
+        document.getElementById("editar-categoria").value   = producto.categoria || "";
+        document.getElementById("editar-color").value       = producto.color || "";
+        document.getElementById("editar-tallas").value      = producto.tallas?.join(", ") || "";
+        document.getElementById("editar-stock").value       = producto.stock || "";
+        document.getElementById("editar-imagen").value      = producto.imagen || "";
+
+        // Mostrar preview de la imagen actual
+        const preview = document.getElementById("editar-preview");
+        if (producto.imagen) {
+            preview.src = producto.imagen;
+            preview.style.display = "block";
+        } else {
+            preview.style.display = "none";
+        }
+
+        // Actualizar preview cuando cambie la URL
+        document.getElementById("editar-imagen").oninput = function () {
+            if (this.value) {
+                preview.src = this.value;
+                preview.style.display = "block";
+            } else {
+                preview.style.display = "none";
+            }
+        };
+
+        document.getElementById("modal-editar").classList.remove("hidden");
+
+    } catch (error) {
+        alert("Error al cargar el producto");
+    }
+}
+
+function cerrarModalEditar() {
+    document.getElementById("modal-editar").classList.add("hidden");
+    productoEditandoId = null;
+}
+
+async function guardarEdicion() {
+    const token = localStorage.getItem("token");
+    const errorDiv   = document.getElementById("editar-error");
+    const successDiv = document.getElementById("editar-success");
+
+    errorDiv.classList.add("hidden");
+    successDiv.classList.add("hidden");
+
+    const nombre = document.getElementById("editar-nombre").value.trim();
+    const precio = document.getElementById("editar-precio").value.trim();
+    const stock  = document.getElementById("editar-stock").value.trim();
+
+    if (!nombre || !precio || !stock) {
+        errorDiv.textContent = "Nombre, precio y stock son obligatorios";
+        errorDiv.classList.remove("hidden");
+        return;
+    }
+
+    const tallasInput = document.getElementById("editar-tallas").value.trim();
+    const tallas = tallasInput.split(",").map(t => t.trim()).filter(t => t !== "");
+
+    const body = {
+        nombre,
+        precio:      Number(precio),
+        descripcion: document.getElementById("editar-descripcion").value.trim(),
+        categoria:   document.getElementById("editar-categoria").value.trim(),
+        color:       document.getElementById("editar-color").value.trim(),
+        tallas,
+        stock:       Number(stock),
+        imagen:      document.getElementById("editar-imagen").value.trim()
+    };
+
+    try {
+        const response = await fetch(`${API_URL}/products/${productoEditandoId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(body)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            successDiv.textContent = "Producto actualizado correctamente";
+            successDiv.classList.remove("hidden");
+            cargarProductos();
+            setTimeout(() => cerrarModalEditar(), 1500);
+        } else {
+            errorDiv.textContent = data.error;
+            errorDiv.classList.remove("hidden");
+        }
+
+    } catch (error) {
+        errorDiv.textContent = "Error de conexión, intenta de nuevo";
+        errorDiv.classList.remove("hidden");
     }
 }
