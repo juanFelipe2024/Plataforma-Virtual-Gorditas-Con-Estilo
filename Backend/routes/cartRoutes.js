@@ -1,18 +1,13 @@
 const express = require("express");
 const router = express.Router();
-
-const {
-    agregarAlCarrito,
-    obtenerCarrito,
-    eliminarDelCarrito,
-    confirmarCompra
-} = require("../controllers/cartController");
-
+const { agregarAlCarrito, obtenerCarrito, eliminarDelCarrito, confirmarCompra } = require("../controllers/cartController");
 const { verifyToken } = require("../middleware/authMiddleware");
+const { validarAgregarAlCarrito, validarEliminarDelCarrito, validarConfirmarCompra } = require("../validators/cartValidators");
+const { validar } = require("../middleware/validationMiddleware");
 
-router.post("/", verifyToken, agregarAlCarrito);
+router.post("/", verifyToken, validarAgregarAlCarrito, validar, agregarAlCarrito);
 router.get("/", verifyToken, obtenerCarrito);
-router.delete("/:productoId", verifyToken, eliminarDelCarrito);
-router.post("/confirmar", verifyToken, confirmarCompra);
+router.delete("/:productoId", verifyToken, validarEliminarDelCarrito, validar, eliminarDelCarrito);
+router.post("/confirmar", verifyToken, validarConfirmarCompra, validar, confirmarCompra);
 
 module.exports = router;
