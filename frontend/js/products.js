@@ -1,5 +1,8 @@
 const API_URL = "http://localhost:3000/api";
 let todosLosProductos = [];
+let currentProductsList = [];
+let currentPage = 0;
+const PAGE_SIZE = 9;
 
 document.addEventListener("DOMContentLoaded", () => {
     verificarSesion();
@@ -25,7 +28,8 @@ async function cargarProductos() {
     try {
         const response = await fetch(`${API_URL}/products`);
         todosLosProductos = await response.json();
-        renderProductos(todosLosProductos);
+        // Inicializar la vista en 'todas' con paginación
+        filtrarCategoria('todas', document.querySelector(".categoria-btn.activa"));
     } catch (error) {
         console.error("Error al cargar productos:", error);
     }
@@ -42,43 +46,74 @@ function filtrarCategoria(categoria, boton) {
     const titulo = document.getElementById("titulo-categoria");
     titulo.textContent = categoria === "todas" ? "Nuestras prendas" : categoria;
 
-    // Filtrar
-    const filtrados = categoria === "todas"
+    // Filtrar y preparar paginación
+    currentProductsList = categoria === "todas"
         ? todosLosProductos
-        : todosLosProductos.filter(p =>
-            p.categoria?.toLowerCase() === categoria.toLowerCase()
-          );
+        : todosLosProductos.filter(p => p.categoria?.toLowerCase() === categoria.toLowerCase());
 
-    renderProductos(filtrados);
+    currentPage = 0;
+    renderPagina();
+}
+function productoCardHTML(producto) {
+    const agotado = producto.stock === 0;
+    return `
+        <div class="producto-card ${agotado ? "producto-agotado" : ""}"
+            onclick="${agotado ? "" : `window.location.href='product.html?id=${producto._id}'`}"
+            style="cursor: ${agotado ? "default" : "pointer"}">
+            <div class="producto-imagen-wrapper">
+                <img src="${producto.imagen || 'img/placeholder.jpg'}" alt="${producto.nombre}">
+                ${agotado ? `<div class="etiqueta-agotado">Agotado</div>` : ""}
+            </div>
+            <div class="producto-info">
+                <p class="producto-nombre">${producto.nombre}</p>
+                <p class="producto-precio">$${producto.precio.toLocaleString()}</p>
+                <p class="producto-tallas">Tallas: ${producto.tallas.join(", ")}</p>
+            </div>
+        </div>
+    `;
 }
 
-function renderProductos(productos) {
+function renderPagina() {
     const grid = document.getElementById("productos-grid");
-
-    if (productos.length === 0) {
+    const total = currentProductsList.length;
+    if (total === 0) {
         grid.innerHTML = "<p style='color:#888'>No hay productos en esta categoría.</p>";
+        removeVerMas();
         return;
     }
 
-    grid.innerHTML = productos.map(producto => {
-        const agotado = producto.stock === 0;
+    const mostradosHasta = Math.min((currentPage + 1) * PAGE_SIZE, total);
+    const visibles = currentProductsList.slice(0, mostradosHasta);
 
-        return `
-            <div class="producto-card ${agotado ? "producto-agotado" : ""}"
-                onclick="${agotado ? "" : `window.location.href='product.html?id=${producto._id}'`}"
-                style="cursor: ${agotado ? "default" : "pointer"}">
-                <div class="producto-imagen-wrapper">
-                    <img src="${producto.imagen || 'img/placeholder.jpg'}" alt="${producto.nombre}">
-                    ${agotado ? `<div class="etiqueta-agotado">Agotado</div>` : ""}
-                </div>
-                <div class="producto-info">
-                    <p class="producto-nombre">${producto.nombre}</p>
-                    <p class="producto-precio">$${producto.precio.toLocaleString()}</p>
-                    <p class="producto-tallas">Tallas: ${producto.tallas.join(", ")}</p>
-                </div>
-            </div>
-        `;
-    }).join("");
+    grid.innerHTML = visibles.map(productoCardHTML).join("");
+
+    // Botón 'Ver más'
+    if (mostradosHasta < total) {
+        renderVerMas();
+    } else {
+        removeVerMas();
+    }
+}
+
+function renderVerMas() {
+    removeVerMas();
+    const grid = document.getElementById("productos-grid");
+    const btn = document.createElement("button");
+    btn.id = "btn-ver-mas";
+    btn.className = "btn-primary btn-ver-mas";
+    btn.textContent = "Ver más";
+    btn.onclick = () => {
+        currentPage++;
+        renderPagina();
+    };
+
+    // Insertar después del grid
+    grid.insertAdjacentElement('afterend', btn);
+}
+
+function removeVerMas() {
+    const old = document.getElementById("btn-ver-mas");
+    if (old) old.remove();
 }
 
 async function actualizarBadgeCarrito() {
