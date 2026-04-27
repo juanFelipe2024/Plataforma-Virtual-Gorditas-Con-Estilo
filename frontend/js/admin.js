@@ -3,12 +3,33 @@ let productoEditandoId = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     verificarAdmin();
+    configurarPestanasAdmin();
     cargarPedidos();
     cargarProductos();
 
     document.getElementById("nav-logout").addEventListener("click", cerrarSesion);
     document.getElementById("btn-agregar").addEventListener("click", agregarProducto);
 });
+
+function configurarPestanasAdmin() {
+    const tabs = document.querySelectorAll(".admin-tab");
+    const panels = document.querySelectorAll(".admin-panel");
+
+    tabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+            const panelId = tab.dataset.panel;
+
+            tabs.forEach(item => item.classList.remove("active"));
+            panels.forEach(panel => {
+                const isActive = panel.id === panelId;
+                panel.classList.toggle("active", isActive);
+                panel.hidden = !isActive;
+            });
+
+            tab.classList.add("active");
+        });
+    });
+}
 
 function verificarAdmin() {
     const token = localStorage.getItem("token");
@@ -117,6 +138,8 @@ async function cargarPedidos() {
         const pedidos = await response.json();
         const container = document.getElementById("pedidos-container");
 
+        actualizarResumenAdmin(pedidos, null);
+
         if (pedidos.length === 0) {
             container.innerHTML = "<p style='color:#888'>No hay pedidos todavía.</p>";
             return;
@@ -170,6 +193,8 @@ async function cargarProductos() {
         const productos = await response.json();
         const container = document.getElementById("productos-container");
 
+        actualizarResumenAdmin(null, productos);
+
         if (productos.length === 0) {
             container.innerHTML = "<p class='carrito-vacio'>No hay productos en el catálogo.</p>";
             return;
@@ -197,6 +222,21 @@ async function cargarProductos() {
 
     } catch (error) {
         console.error("Error al cargar productos:", error);
+    }
+}
+
+function actualizarResumenAdmin(pedidos, productos) {
+    const pedidosTotal = document.getElementById("admin-total-pedidos");
+    const productosTotal = document.getElementById("admin-total-productos");
+    const pendientesTotal = document.getElementById("admin-pedidos-pendientes");
+
+    if (Array.isArray(pedidos)) {
+        pedidosTotal.textContent = pedidos.length;
+        pendientesTotal.textContent = pedidos.filter(pedido => pedido.estado === "pendiente").length;
+    }
+
+    if (Array.isArray(productos)) {
+        productosTotal.textContent = productos.length;
     }
 }
 
