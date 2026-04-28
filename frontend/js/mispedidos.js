@@ -49,7 +49,7 @@ async function cargarMisPedidos() {
             return;
         }
 
-        container.innerHTML = pedidos.map(pedido => {
+        container.innerHTML = pedidos.map((pedido, pedidoIdx) => {
             const fecha = new Date(pedido.fecha).toLocaleDateString("es-CO", {
                 year: "numeric",
                 month: "long",
@@ -62,13 +62,31 @@ async function cargarMisPedidos() {
                 cancelado: "estado-cancelado"
             }[pedido.estado] || "estado-pendiente";
 
-            const productosHTML = pedido.productos.map(p => `
-                <div class="pedido-producto-fila">
-                    <span class="pedido-producto-nombre">${p.nombre}</span>
-                    <span class="pedido-producto-cantidad">x${p.cantidad}</span>
-                    <span class="pedido-producto-subtotal">$${(p.precio * p.cantidad).toLocaleString()}</span>
-                </div>
-            `).join("");
+            const productosHTML = pedido.productos.map((p, idx) => {
+                const expandId = `expand-${pedidoIdx}-${idx}`;
+                return `
+                    <div class="pedido-producto-item">
+                        <div class="pedido-producto-fila" onclick="toggleDetalleProducto('${expandId}')">
+                            <span class="pedido-producto-nombre">${p.nombre}</span>
+                            <div class="pedido-producto-derecha">
+                                <span class="pedido-producto-cantidad">x${p.cantidad}</span>
+                                <span class="pedido-producto-subtotal">$${(p.precio * p.cantidad).toLocaleString()}</span>
+                                <span class="pedido-expand-icon">▼</span>
+                            </div>
+                        </div>
+                        <div id="${expandId}" class="pedido-detalle-expandido hidden">
+                            <img class="pedido-detalle-imagen" src="${p.imagen || 'img/placeholder.jpg'}" alt="${p.nombre}">
+                            <div class="pedido-detalle-info">
+                                <p><strong>Descripción:</strong> ${p.descripcion || 'N/A'}</p>
+                                <p><strong>Talla:</strong> ${p.talla || 'N/A'}</p>
+                                <p><strong>Precio unitario:</strong> $${(p.precio || 0).toLocaleString()}</p>
+                                <p><strong>Cantidad:</strong> ${p.cantidad}</p>
+                                <p><strong>Subtotal:</strong> $${(p.precio * p.cantidad).toLocaleString()}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join("");
 
             return `
                 <div class="mi-pedido-card">
@@ -94,6 +112,21 @@ async function cargarMisPedidos() {
     } catch (error) {
         console.error("Error al cargar pedidos:", error);
         container.innerHTML = `<p style="color:#888">Error al cargar tus pedidos. Intenta de nuevo.</p>`;
+    }
+}
+
+function toggleDetalleProducto(elementId) {
+    const elemento = document.getElementById(elementId);
+    const botonClick = event?.target.closest('.pedido-producto-fila');
+    const icono = botonClick?.querySelector('.pedido-expand-icon');
+    
+    if (elemento) {
+        elemento.classList.toggle('hidden');
+        if (icono) {
+            icono.style.transform = elemento.classList.contains('hidden') 
+                ? 'rotate(0deg)' 
+                : 'rotate(180deg)';
+        }
     }
 }
 

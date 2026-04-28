@@ -154,7 +154,10 @@ exports.confirmarCompra = async (req, res) => {
                 productoId: producto._id,
                 nombre: producto.nombre,
                 precio: producto.precio,
-                cantidad: item.cantidad
+                cantidad: item.cantidad,
+                talla: item.talla,
+                descripcion: producto.descripcion,
+                imagen: producto.imagen
             });
         }
 

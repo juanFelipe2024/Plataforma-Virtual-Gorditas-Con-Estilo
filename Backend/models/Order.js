@@ -20,6 +20,15 @@ const orderSchema = new mongoose.Schema({
             },
             cantidad: {
                 type: Number
+            },
+            talla: {
+                type: String
+            },
+            descripcion: {
+                type: String
+            },
+            imagen: {
+                type: String
             }
         }
     ],
