@@ -3,11 +3,43 @@ let todosLosProductos = [];
 let currentProductsList = [];
 let currentPage = 0;
 const PAGE_SIZE = 9;
+let categoriaActual = 'todas';
+let searchQuery = '';
+let sortOrder = 'none';
 
 document.addEventListener("DOMContentLoaded", () => {
     verificarSesion();
     cargarProductos();
     actualizarBadgeCarrito();
+    const searchInput = document.getElementById('search-input');
+    const sortSelect = document.getElementById('sort-select');
+    const searchClear = document.getElementById('search-clear');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value.trim().toLowerCase();
+            currentPage = 0;
+            applyFilters();
+        });
+    }
+    if (searchClear) {
+        searchClear.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (searchInput) {
+                searchInput.value = '';
+                searchQuery = '';
+                currentPage = 0;
+                applyFilters();
+                searchInput.focus();
+            }
+        });
+    }
+    if (sortSelect) {
+        sortSelect.addEventListener('change', (e) => {
+            sortOrder = e.target.value;
+            currentPage = 0;
+            applyFilters();
+        });
+    }
     document.getElementById("nav-logout").addEventListener("click", cerrarSesion);
 });
 
@@ -46,12 +78,42 @@ function filtrarCategoria(categoria, boton) {
     const titulo = document.getElementById("titulo-categoria");
     titulo.textContent = categoria === "todas" ? "Nuestras prendas" : categoria;
 
-    // Filtrar y preparar paginación
-    currentProductsList = categoria === "todas"
-        ? todosLosProductos
-        : todosLosProductos.filter(p => p.categoria?.toLowerCase() === categoria.toLowerCase());
-
+    categoriaActual = categoria;
     currentPage = 0;
+    applyFilters();
+}
+
+function applyFilters() {
+    // Filtrar por categoría
+    let lista = categoriaActual === 'todas'
+        ? todosLosProductos.slice()
+        : todosLosProductos.filter(p => p.categoria?.toLowerCase() === categoriaActual.toLowerCase());
+
+    // Filtrar por búsqueda
+    if (searchQuery) {
+        lista = lista.filter(p => {
+            const nombre = (p.nombre || '').toLowerCase();
+            const descripcion = (p.descripcion || '').toLowerCase();
+            return nombre.includes(searchQuery) || descripcion.includes(searchQuery);
+        });
+    }
+
+    // Ordenar
+    if (sortOrder === 'price-asc') {
+        lista.sort((a, b) => (a.precio || 0) - (b.precio || 0));
+    } else if (sortOrder === 'price-desc') {
+        lista.sort((a, b) => (b.precio || 0) - (a.precio || 0));
+    } else if (sortOrder === 'name-asc') {
+        lista.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', undefined, { sensitivity: 'base' }));
+    } else if (sortOrder === 'name-desc') {
+        lista.sort((a, b) => (b.nombre || '').localeCompare(a.nombre || '', undefined, { sensitivity: 'base' }));
+    } else if (sortOrder === 'stock-asc') {
+        lista.sort((a, b) => (a.stock || 0) - (b.stock || 0));
+    } else if (sortOrder === 'stock-desc') {
+        lista.sort((a, b) => (b.stock || 0) - (a.stock || 0));
+    }
+
+    currentProductsList = lista;
     renderPagina();
 }
 function productoCardHTML(producto) {
