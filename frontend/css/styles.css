@@ -675,6 +675,26 @@ body::after {
     animation-delay: calc(var(--i, 0) * 0.06s);
 }
 
+.carrito-item-thumb {
+    width: 88px;
+    height: 88px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid rgba(223,213,200,0.9);
+    background: #fff7ee;
+    flex-shrink: 0;
+}
+
+.carrito-item-info {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.carrito-item-nombre {
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
 .carrito-item-nombre {
     font-weight: 700;
     margin-bottom: 4px;

@@ -42,9 +42,10 @@ async function cargarCarrito() {
             total += subtotal;
             return `
                 <div class="carrito-item" style="--i:${index}">
+                    <img class="carrito-item-thumb" src="${item.productoId.imagen || 'img/placeholder.jpg'}" alt="${item.productoId.nombre}">
                     <div class="carrito-item-info">
                         <p class="carrito-item-nombre">${item.productoId.nombre}</p>
-                        <p class="carrito-item-precio">$${item.productoId.precio.toLocaleString()}</p>
+                        <p class="carrito-item-precio">$${(item.productoId.precio || 0).toLocaleString()}</p>
                         <p class="carrito-item-cantidad">Talla: ${item.talla} — Cantidad: ${item.cantidad}</p>
                     </div>
                     <button class="btn-eliminar"
