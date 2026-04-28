@@ -20,20 +20,9 @@ exports.obtenerPedidosCliente = async (req, res) => {
         const usuarioId = req.usuario.id;
 
         const pedidos = await Order.find({ usuario: usuarioId })
-            .populate("productos.productoId", "imagen")
             .sort({ fecha: -1 });
 
-        // Enriquecer datos: agregar imagen a cada producto
-        const pedidosEnriquecidos = pedidos.map(pedido => {
-            const pedidoObj = pedido.toObject();
-            pedidoObj.productos = pedidoObj.productos.map(p => ({
-                ...p,
-                imagen: p.productoId?.imagen || null
-            }));
-            return pedidoObj;
-        });
-
-        res.status(200).json(pedidosEnriquecidos);
+        res.status(200).json(pedidos);
 
     } catch (error) {
         res.status(500).json({
