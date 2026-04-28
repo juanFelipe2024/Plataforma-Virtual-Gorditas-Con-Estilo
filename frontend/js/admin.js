@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
     configurarPestanasAdmin();
     cargarPedidos();
     cargarProductos();
+    cargarEstadisticas();
 
     document.getElementById("nav-logout").addEventListener("click", cerrarSesion);
     document.getElementById("btn-agregar").addEventListener("click", agregarProducto);
@@ -30,6 +31,7 @@ function configurarPestanasAdmin() {
 
             // Si se abrió la pestaña de usuarios, cargar listado
             if (panelId === 'panel-usuarios') cargarUsuarios();
+            if (panelId === 'panel-stats') cargarEstadisticas();
         });
     });
 }
@@ -187,6 +189,118 @@ async function cargarPedidos() {
 
     } catch (error) {
         console.error("Error al cargar pedidos:", error);
+    }
+}
+
+async function cargarEstadisticas() {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+        const response = await fetch(`${API_URL}/orders/stats`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (!response.ok) return;
+
+        const stats = await response.json();
+
+        const revenueEl = document.getElementById("admin-revenue-month");
+        const topCountEl = document.getElementById("admin-top-count");
+        const topList = document.getElementById("admin-top-products-list");
+
+        if (revenueEl) revenueEl.textContent = `$${Number(stats.revenueThisMonth || 0).toLocaleString()}`;
+        if (topCountEl) topCountEl.textContent = stats.topProducts && stats.topProducts.length ? stats.topProducts.length : "—";
+
+        if (topList) {
+            topList.innerHTML = (stats.topProducts || []).map((p, i) =>
+                `<li>${i + 1}. ${p.nombre || 'Sin nombre'} — ${p.totalCantidad || 0} uds — $${Number(p.totalRevenue || 0).toLocaleString()}</li>`
+            ).join("");
+        }
+
+        // Render para nueva pestaña de estadísticas
+        const statRevenueMonth = document.getElementById("stat-revenue-month");
+        const statOrdersMonth = document.getElementById("stat-orders-month");
+        const statTopProduct = document.getElementById("stat-top-product");
+        const statsTopProducts = document.getElementById("stats-top-products");
+
+        if (statRevenueMonth) statRevenueMonth.textContent = `$${Number(stats.revenueThisMonth || 0).toLocaleString()}`;
+        if (statOrdersMonth) statOrdersMonth.textContent = stats.ordersCountThisMonth || 0;
+        if (statTopProduct) statTopProduct.textContent = (stats.topProducts && stats.topProducts[0]) ? `${stats.topProducts[0].nombre} — ${stats.topProducts[0].totalCantidad} uds` : '—';
+
+        // Lista top productos en panel
+        if (statsTopProducts) {
+            statsTopProducts.innerHTML = (stats.topProducts || []).map((p, i) =>
+                `<li style="margin-bottom:6px"><strong style="color:#3b2b24">${i+1}. ${p.nombre || 'Sin nombre'}</strong> — ${p.totalCantidad || 0} uds — $${Number(p.totalRevenue || 0).toLocaleString()}</li>`
+            ).join("");
+        }
+
+        // Charts using Chart.js
+        try {
+            // Revenue by day (bar)
+            const revenueCanvas = document.getElementById('chart-revenue');
+            if (revenueCanvas) {
+                const labels = (stats.revenueByDay || []).map(r => r._id);
+                const data = (stats.revenueByDay || []).map(r => r.revenue);
+                if (window._revenueChart) window._revenueChart.destroy();
+                const ctx = revenueCanvas.getContext('2d');
+                window._revenueChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: 'Ingresos (MXN)',
+                            data,
+                            backgroundColor: 'rgba(15,118,110,0.85)'
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { ticks: { callback: v => '$' + Number(v).toLocaleString() } } }
+                    }
+                });
+            }
+
+            // Top products (horizontal bar)
+            const topCanvas = document.getElementById('chart-top-products');
+            if (topCanvas) {
+                const labels = (stats.topProducts || []).map(p => p.nombre || 'Sin nombre');
+                const data = (stats.topProducts || []).map(p => p.totalCantidad || 0);
+                if (window._topProductsChart) window._topProductsChart.destroy();
+                const ctx2 = topCanvas.getContext('2d');
+                window._topProductsChart = new Chart(ctx2, {
+                    type: 'bar',
+                    data: { labels, datasets: [{ label: 'Unidades', data, backgroundColor: 'rgba(211,86,58,0.85)' }] },
+                    options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+            }
+        } catch (e) {
+            console.warn('Chart.js no disponible o error al renderizar charts', e);
+        }
+
+        // Botón exportar CSV
+        const btnExport = document.getElementById('btn-export-csv');
+        if (btnExport) {
+            btnExport.onclick = () => {
+                const rows = [];
+                rows.push(['fecha', 'revenue', 'orders']);
+                (stats.revenueByDay || []).forEach(r => rows.push([r._id, r.revenue, r.orders]));
+                const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'estadisticas_ventas.csv';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+            };
+        }
+
+    } catch (error) {
+        console.error("Error al cargar estadísticas:", error);
     }
 }
 
@@ -351,6 +465,7 @@ async function actualizarEstado(pedidoId, selectEl) {
             const feedback = document.getElementById(`feedback-${pedidoId}`);
             feedback.classList.remove("hidden");
             setTimeout(() => feedback.classList.add("hidden"), 2000);
+            cargarEstadisticas();
         } else {
             alert("Error al actualizar el estado");
             cargarPedidos();

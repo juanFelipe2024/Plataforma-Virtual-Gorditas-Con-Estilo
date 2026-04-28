@@ -23,7 +23,7 @@
                 <h1>Gestiona pedidos, catálogo y nuevas prendas desde un solo tablero.</h1>
                 <p class="admin-copy">Usa las pestañas para cambiar rápido entre tareas y evitar el desplazamiento largo de la página.</p>
             </div>
-            <div class="admin-stats">
+                <div class="admin-stats">
                 <div class="admin-stat-card">
                     <span>Pedidos</span>
                     <strong id="admin-total-pedidos">0</strong>
@@ -36,6 +36,7 @@
                     <span>Pendientes</span>
                     <strong id="admin-pedidos-pendientes">0</strong>
                 </div>
+                
             </div>
         </section>
 
@@ -43,6 +44,7 @@
             <button class="admin-tab active" type="button" data-panel="panel-producto">Agregar producto</button>
             <button class="admin-tab" type="button" data-panel="panel-pedidos">Pedidos recibidos</button>
             <button class="admin-tab" type="button" data-panel="panel-productos">Productos en catálogo</button>
+            <button class="admin-tab" type="button" data-panel="panel-stats">Estadísticas</button>
             <button class="admin-tab" type="button" data-panel="panel-usuarios">Usuarios</button>
         </div>
 
@@ -118,6 +120,55 @@
                     <p class="panel-help">Edita o elimina productos desde la lista.</p>
                 </div>
                 <div id="productos-container"></div>
+                <div class="panel-card" style="margin-top:18px;">
+                    <h3 class="section-title">Top productos</h3>
+                    <p class="panel-help">Más vendidos (últimos 90 días)</p>
+                    <ul id="admin-top-products-list" style="margin-top:8px; padding-left:18px; color:var(--muted)"></ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="panel-stats" class="admin-panel" role="tabpanel" hidden>
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="section-title">Estadísticas de ventas</h2>
+                        <p class="panel-help">Resumen visual y tablas con las métricas clave.</p>
+                    </div>
+                </div>
+
+                <div class="stats-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;">
+                    <div class="panel-card" style="padding:14px;">
+                        <span style="font-size:0.85rem;color:var(--muted)">Ingresos (mes)</span>
+                        <strong id="stat-revenue-month" style="font-size:1.4rem;margin-top:6px;display:block">$0</strong>
+                        <p style="color:var(--muted);margin-top:8px;font-size:0.9rem">Pedidos confirmados este mes</p>
+                        <div id="stat-orders-month" style="font-weight:700;margin-top:6px">0</div>
+                    </div>
+
+                    <div class="panel-card" style="padding:14px;">
+                        <span style="font-size:0.85rem;color:var(--muted)">Top vendido</span>
+                        <strong id="stat-top-product" style="font-size:1.15rem;margin-top:6px;display:block">—</strong>
+                        <p style="color:var(--muted);margin-top:8px;font-size:0.9rem">Unidades vendidas (últimos 90 días)</p>
+                    </div>
+
+                    <div class="panel-card" style="padding:14px;">
+                        <span style="font-size:0.85rem;color:var(--muted)">Exportar</span>
+                        <button id="btn-export-csv" class="btn-primary" style="margin-top:8px;">Descargar CSV</button>
+                    </div>
+                </div>
+
+                <div class="panel-card" style="margin-bottom:12px;">
+                    <h3 style="margin-bottom:8px;color:var(--muted);font-size:1rem">Ingresos últimos 30 días</h3>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:8px">
+                        <canvas id="chart-revenue" style="width:100%;height:180px"></canvas>
+                        <canvas id="chart-top-products" style="width:100%;height:180px"></canvas>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <h3 style="margin-bottom:8px;color:var(--muted);font-size:1rem">Top productos (90 días)</h3>
+                    <ul id="stats-top-products" style="padding-left:18px;color:var(--muted)"></ul>
+                </div>
             </div>
         </section>
 
@@ -194,6 +245,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/admin.js"></script>
 </body>
 </html>
