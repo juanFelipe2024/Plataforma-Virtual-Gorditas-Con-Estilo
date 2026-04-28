@@ -70,3 +70,28 @@ exports.loginUser = async (req, res) => {
         });
     }
 };
+
+exports.getUsers = async (req, res) => {
+    try {
+        const users = await User.find({}, "nombre email telefono rol");
+        res.status(200).json(users);
+    } catch (error) {
+        res.status(500).json({ error: "Error al obtener usuarios" });
+    }
+};
+
+exports.deleteUser = async (req, res) => {
+    try {
+        const userId = req.params.id;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: "Usuario no encontrado" });
+        }
+
+        await User.findByIdAndDelete(userId);
+        res.status(200).json({ message: "Usuario eliminado correctamente" });
+    } catch (error) {
+        res.status(500).json({ error: "Error al eliminar usuario" });
+    }
+};

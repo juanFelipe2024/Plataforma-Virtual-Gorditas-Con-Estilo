@@ -43,6 +43,7 @@
             <button class="admin-tab active" type="button" data-panel="panel-producto">Agregar producto</button>
             <button class="admin-tab" type="button" data-panel="panel-pedidos">Pedidos recibidos</button>
             <button class="admin-tab" type="button" data-panel="panel-productos">Productos en catálogo</button>
+            <button class="admin-tab" type="button" data-panel="panel-usuarios">Usuarios</button>
         </div>
 
         <section id="panel-producto" class="admin-panel active" role="tabpanel">
@@ -117,6 +118,16 @@
                     <p class="panel-help">Edita o elimina productos desde la lista.</p>
                 </div>
                 <div id="productos-container"></div>
+            </div>
+        </section>
+
+        <section id="panel-usuarios" class="admin-panel" role="tabpanel" hidden>
+            <div class="panel-card">
+                <div class="panel-header">
+                    <h2 class="section-title">Usuarios</h2>
+                    <p class="panel-help">Lista de clientes registrados. Puedes eliminar usuarios aquí.</p>
+                </div>
+                <div id="usuarios-container"></div>
             </div>
         </section>
 

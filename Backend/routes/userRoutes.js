@@ -1,12 +1,18 @@
+
 //const { verifyToken } = require("../middleware/authMiddleware");
 const express = require("express");
 const router = express.Router();
-const { registerUser, loginUser } = require("../controllers/userController");
+const { registerUser, loginUser, getUsers, deleteUser } = require("../controllers/userController");
 const { validarRegistro, validarLogin } = require("../validators/userValidators");
 const { validar } = require("../middleware/validationMiddleware");
+const { verifyToken, verifyAdmin } = require("../middleware/authMiddleware");
 
 router.post("/register", validarRegistro, validar, registerUser);
 router.post("/login", validarLogin, validar, loginUser);
+
+// Rutas administrativas: listar y eliminar usuarios
+router.get("/", verifyToken, verifyAdmin, getUsers);
+router.delete("/:id", verifyToken, verifyAdmin, deleteUser);
 
 module.exports = router;
 

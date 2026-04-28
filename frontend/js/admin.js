@@ -27,6 +27,9 @@ function configurarPestanasAdmin() {
             });
 
             tab.classList.add("active");
+
+            // Si se abrió la pestaña de usuarios, cargar listado
+            if (panelId === 'panel-usuarios') cargarUsuarios();
         });
     });
 }
@@ -222,6 +225,73 @@ async function cargarProductos() {
 
     } catch (error) {
         console.error("Error al cargar productos:", error);
+    }
+}
+
+async function cargarUsuarios() {
+    const token = localStorage.getItem("token");
+    const container = document.getElementById("usuarios-container");
+
+    if (!token) {
+        container.innerHTML = "<p style='color:#888'>Acceso no autorizado.</p>";
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/users`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            container.innerHTML = "<p style='color:#888'>No se pueden obtener los usuarios.</p>";
+            return;
+        }
+
+        const users = await response.json();
+
+        if (!Array.isArray(users) || users.length === 0) {
+            container.innerHTML = "<p style='color:#888'>No hay usuarios registrados.</p>";
+            return;
+        }
+
+        container.innerHTML = users.map(user => `
+            <div class="admin-producto-card">
+                <div class="admin-producto-info">
+                    <strong>${user.nombre}</strong>
+                    <p>${user.email}</p>
+                    <p style="color:var(--muted)">Rol: ${user.rol || 'cliente'}</p>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn-eliminar-producto" onclick="eliminarUsuario('${user._id}')">Eliminar</button>
+                </div>
+            </div>
+        `).join("");
+
+    } catch (error) {
+        console.error("Error al cargar usuarios:", error);
+        container.innerHTML = "<p style='color:#888'>Error de conexión al obtener usuarios.</p>";
+    }
+}
+
+async function eliminarUsuario(userId) {
+    const token = localStorage.getItem("token");
+    if (!confirm("¿Estás seguro de eliminar este usuario?")) return;
+
+    try {
+        const response = await fetch(`${API_URL}/users/${userId}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+            cargarUsuarios();
+        } else {
+            const data = await response.json();
+            alert(data.error || 'No fue posible eliminar el usuario');
+        }
+
+    } catch (error) {
+        alert("Error de conexión, intenta de nuevo");
     }
 }
 
