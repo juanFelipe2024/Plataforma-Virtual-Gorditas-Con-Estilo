@@ -5,12 +5,20 @@ const jwt = require("jsonwebtoken");
 exports.registerUser = async (req, res) => {
     try {
         const { nombre, email, password, telefono, rol } = req.body;
+        const emailNormalizado = email.trim().toLowerCase();
+
+        const usuarioExistente = await User.findOne({ email: emailNormalizado });
+        if (usuarioExistente) {
+            return res.status(409).json({
+                error: "Ya existe una cuenta registrada con ese email"
+            });
+        }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = new User({
             nombre,
-            email,
+            email: emailNormalizado,
             password: hashedPassword,
             telefono,
             rol
@@ -23,6 +31,12 @@ exports.registerUser = async (req, res) => {
         });
 
     } catch (error) {
+        if (error && error.code === 11000) {
+            return res.status(409).json({
+                error: "Ya existe una cuenta registrada con ese email"
+            });
+        }
+
         res.status(500).json({
             error: "Error al registrar usuario"
         });

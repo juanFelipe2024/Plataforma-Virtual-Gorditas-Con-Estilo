@@ -1,8 +1,8 @@
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 const Order = require("../models/Order");
-const { enviarConfirmacion } = require("../services/whatsappService");
 const { enviarConfirmacionEmail } = require("../services/emailService");
+const User = require("../models/User");
 
 // Agregar un producto al carrito
 exports.agregarAlCarrito = async (req, res) => {
@@ -102,6 +102,8 @@ exports.eliminarDelCarrito = async (req, res) => {
 
 // Confirmar la compra y se convierte en pedido
 exports.confirmarCompra = async (req, res) => {
+    const stockActualizado = [];
+
     try {
         const usuarioId = req.usuario.id;
         const metodoPago = req.body.metodoPago || "No especificado";
@@ -121,11 +123,30 @@ exports.confirmarCompra = async (req, res) => {
         for (const item of carrito.productos) {
             const producto = item.productoId;
 
-            if (producto.stock < item.cantidad) {
+            const productoActualizado = await Product.findOneAndUpdate(
+                { _id: producto._id, stock: { $gte: item.cantidad } },
+                { $inc: { stock: -item.cantidad } },
+                { new: true }
+            );
+
+            if (!productoActualizado) {
+                for (const ajuste of stockActualizado) {
+                    await Product.findByIdAndUpdate(ajuste.productoId, {
+                        $inc: { stock: ajuste.cantidad }
+                    });
+                }
+
+                stockActualizado.length = 0;
+
                 return res.status(400).json({
                     error: `Stock insuficiente para ${producto.nombre}`
                 });
             }
+
+            stockActualizado.push({
+                productoId: producto._id,
+                cantidad: item.cantidad
+            });
 
             total += producto.precio * item.cantidad;
 
@@ -134,10 +155,6 @@ exports.confirmarCompra = async (req, res) => {
                 nombre: producto.nombre,
                 precio: producto.precio,
                 cantidad: item.cantidad
-            });
-
-            await Product.findByIdAndUpdate(producto._id, {
-                $inc: { stock: -item.cantidad }
             });
         }
 
@@ -152,10 +169,7 @@ exports.confirmarCompra = async (req, res) => {
         carrito.productos = [];
         await carrito.save();
 
-        const usuario = await require("../models/User").findById(usuarioId);
-        if (usuario && usuario.telefono) {
-            await enviarConfirmacion(usuario.telefono, pedido, metodoPago);
-        }
+        const usuario = await User.findById(usuarioId);
         if (usuario && usuario.email) {
             await enviarConfirmacionEmail(usuario.email, usuario.nombre, pedido, metodoPago);
         }
@@ -166,6 +180,12 @@ exports.confirmarCompra = async (req, res) => {
         });
 
     } catch (error) {
+        for (const ajuste of stockActualizado) {
+            await Product.findByIdAndUpdate(ajuste.productoId, {
+                $inc: { stock: ajuste.cantidad }
+            });
+        }
+
         res.status(500).json({
             error: "Error al confirmar la compra"
         });

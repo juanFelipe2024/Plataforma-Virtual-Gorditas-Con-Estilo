@@ -1,9 +1,14 @@
 const { Resend } = require("resend");
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 exports.enviarConfirmacionEmail = async (email, nombre, pedido, metodoPago) => {
     try {
+        if (!process.env.RESEND_API_KEY) {
+            console.warn("RESEND_API_KEY no está configurada; se omite el envío de email.");
+            return;
+        }
+
+        const resend = new Resend(process.env.RESEND_API_KEY);
+
         const metodoTexto = metodoPago === "tarjeta"
             ? "Tarjeta de crédito/débito"
             : metodoPago === "transferencia"
