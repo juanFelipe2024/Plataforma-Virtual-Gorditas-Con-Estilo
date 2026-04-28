@@ -433,6 +433,52 @@ body::after {
     .sort-select { order: 2; width: 100%; }
 }
 
+/* Toasts y animación del badge */
+.toast-container {
+    position: fixed;
+    right: 18px;
+    top: 18px;
+    display: grid;
+    gap: 10px;
+    z-index: 9999;
+}
+
+.toast {
+    background: #fff;
+    padding: 10px 14px;
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(23,18,15,0.12);
+    color: #2f2924;
+    transform: translateY(-8px) scale(0.98);
+    opacity: 0;
+    transition: transform 220ms cubic-bezier(.2,.9,.2,1), opacity 220ms ease;
+    font-weight: 700;
+}
+
+.toast-show {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+.toast-hide {
+    transform: translateY(-10px) scale(0.98);
+    opacity: 0;
+}
+
+.toast-success { border-left: 4px solid var(--ok-text); }
+.toast-error { border-left: 4px solid var(--danger-text); }
+
+@keyframes badgePop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.32) rotate(-6deg); }
+    70% { transform: scale(0.92) rotate(3deg); }
+    100% { transform: scale(1); }
+}
+
+.badge-pop {
+    animation: badgePop 540ms cubic-bezier(.2,.9,.2,1);
+}
+
 .categoria-btn {
     border: 1px solid rgba(15, 118, 110, 0.35);
     background: rgba(255, 255, 255, 0.66);

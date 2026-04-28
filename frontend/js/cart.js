@@ -70,7 +70,7 @@ async function eliminarDelCarrito(productoId, talla) {
             method: "DELETE",
             headers: { "Authorization": `Bearer ${token}` }
         });
-        if (response.ok) cargarCarrito();
+        if (response.ok) { cargarCarrito(); showToast('Producto eliminado', 'success'); }
     } catch (error) {
         alert("Error de conexión, intenta de nuevo");
     }

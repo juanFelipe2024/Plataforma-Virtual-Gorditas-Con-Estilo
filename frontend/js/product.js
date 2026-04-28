@@ -122,9 +122,12 @@ async function agregarAlCarrito(productoId) {
         const data = await response.json();
 
         if (response.ok) {
-            alert("Producto agregado al carrito");
+            // feedback moderno: toast + animación del badge
+            showToast('Producto agregado al carrito', 'success');
+            await actualizarBadgeCarrito();
+            bumpBadge();
         } else {
-            alert(data.error);
+            showToast(data.error || 'No se pudo agregar', 'error');
         }
 
     } catch (error) {
