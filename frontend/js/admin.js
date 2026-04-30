@@ -1,9 +1,12 @@
 const API_URL = "http://localhost:3000/api";
 let productoEditandoId = null;
+let statsCache = null;
+let statsRangeDays = 30;
 
 document.addEventListener("DOMContentLoaded", () => {
     verificarAdmin();
     configurarPestanasAdmin();
+    configurarFiltroRango();
     cargarPedidos();
     cargarProductos();
     cargarEstadisticas();
@@ -34,6 +37,32 @@ function configurarPestanasAdmin() {
             if (panelId === 'panel-stats') cargarEstadisticas();
         });
     });
+}
+
+function configurarFiltroRango() {
+    const rangeSelect = document.getElementById("stats-range");
+    if (!rangeSelect || rangeSelect.dataset.bound) return;
+
+    rangeSelect.dataset.bound = "true";
+    statsRangeDays = Number(rangeSelect.value) || 30;
+    actualizarTituloRango(statsRangeDays);
+
+    rangeSelect.addEventListener("change", () => {
+        statsRangeDays = Number(rangeSelect.value) || 30;
+        actualizarTituloRango(statsRangeDays);
+        if (statsCache) renderizarCharts(statsCache, statsRangeDays);
+    });
+}
+
+function actualizarTituloRango(rangeDays) {
+    const revenueTitle = document.getElementById("stats-revenue-title");
+    if (revenueTitle) revenueTitle.textContent = `Ingresos últimos ${rangeDays} días`;
+}
+
+function filtrarRevenuePorRango(stats, rangeDays) {
+    const source = stats && stats.revenueByDay ? stats.revenueByDay : [];
+    if (!rangeDays || source.length <= rangeDays) return source;
+    return source.slice(-rangeDays);
 }
 
 function verificarAdmin() {
@@ -204,6 +233,7 @@ async function cargarEstadisticas() {
         if (!response.ok) return;
 
         const stats = await response.json();
+        statsCache = stats;
 
         const revenueEl = document.getElementById("admin-revenue-month");
         const topCountEl = document.getElementById("admin-top-count");
@@ -235,49 +265,7 @@ async function cargarEstadisticas() {
             ).join("");
         }
 
-        // Charts using Chart.js
-        try {
-            // Revenue by day (bar)
-            const revenueCanvas = document.getElementById('chart-revenue');
-            if (revenueCanvas) {
-                const labels = (stats.revenueByDay || []).map(r => r._id);
-                const data = (stats.revenueByDay || []).map(r => r.revenue);
-                if (window._revenueChart) window._revenueChart.destroy();
-                const ctx = revenueCanvas.getContext('2d');
-                window._revenueChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels,
-                        datasets: [{
-                            label: 'Ingresos (MXN)',
-                            data,
-                            backgroundColor: 'rgba(15,118,110,0.85)'
-                        }]
-                    },
-                    options: {
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { ticks: { callback: v => '$' + Number(v).toLocaleString() } } }
-                    }
-                });
-            }
-
-            // Top products (horizontal bar)
-            const topCanvas = document.getElementById('chart-top-products');
-            if (topCanvas) {
-                const labels = (stats.topProducts || []).map(p => p.nombre || 'Sin nombre');
-                const data = (stats.topProducts || []).map(p => p.totalCantidad || 0);
-                if (window._topProductsChart) window._topProductsChart.destroy();
-                const ctx2 = topCanvas.getContext('2d');
-                window._topProductsChart = new Chart(ctx2, {
-                    type: 'bar',
-                    data: { labels, datasets: [{ label: 'Unidades', data, backgroundColor: 'rgba(211,86,58,0.85)' }] },
-                    options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } } }
-                });
-            }
-        } catch (e) {
-            console.warn('Chart.js no disponible o error al renderizar charts', e);
-        }
+        renderizarCharts(stats, statsRangeDays);
 
         // Botón exportar CSV
         const btnExport = document.getElementById('btn-export-csv');
@@ -285,7 +273,8 @@ async function cargarEstadisticas() {
             btnExport.onclick = () => {
                 const rows = [];
                 rows.push(['fecha', 'revenue', 'orders']);
-                (stats.revenueByDay || []).forEach(r => rows.push([r._id, r.revenue, r.orders]));
+                const filtered = filtrarRevenuePorRango(stats, statsRangeDays);
+                filtered.forEach(r => rows.push([r._id, r.revenue, r.orders]));
                 const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
                 const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
@@ -301,6 +290,119 @@ async function cargarEstadisticas() {
 
     } catch (error) {
         console.error("Error al cargar estadísticas:", error);
+    }
+}
+
+function renderizarCharts(stats, rangeDays) {
+    if (!stats) return;
+
+    actualizarTituloRango(rangeDays);
+
+    try {
+        const formatCurrency = value => `$${Number(value || 0).toLocaleString()}`;
+        const chartColors = {
+            accent: 'rgba(15,118,110,0.9)',
+            accentSoft: 'rgba(15,118,110,0.18)',
+            primary: 'rgba(211,86,58,0.9)',
+            primarySoft: 'rgba(211,86,58,0.18)',
+            grid: 'rgba(160,140,120,0.18)'
+        };
+
+        const revenueCanvas = document.getElementById('chart-revenue');
+        if (revenueCanvas) {
+            const filtered = filtrarRevenuePorRango(stats, rangeDays);
+            const labels = filtered.map(r => r._id);
+            const data = filtered.map(r => r.revenue || 0);
+            if (window._revenueChart) window._revenueChart.destroy();
+
+            const ctx = revenueCanvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, revenueCanvas.height || 220);
+            gradient.addColorStop(0, 'rgba(15,118,110,0.35)');
+            gradient.addColorStop(1, 'rgba(15,118,110,0.03)');
+
+            window._revenueChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Ingresos diarios',
+                        data,
+                        borderColor: chartColors.accent,
+                        backgroundColor: gradient,
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: chartColors.accent
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: context => `${formatCurrency(context.parsed.y)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#6f645a' } },
+                        y: {
+                            grid: { color: chartColors.grid },
+                            ticks: { callback: value => formatCurrency(value), color: '#6f645a' }
+                        }
+                    }
+                }
+            });
+        }
+
+        const topCanvas = document.getElementById('chart-top-products');
+        if (topCanvas) {
+            const topItems = (stats.topProducts || []).slice(0, 6);
+            const labels = topItems.map(p => p.nombre || 'Sin nombre');
+            const data = topItems.map(p => p.totalCantidad || 0);
+            if (window._topProductsChart) window._topProductsChart.destroy();
+
+            const ctx2 = topCanvas.getContext('2d');
+            const barGradient = ctx2.createLinearGradient(0, 0, topCanvas.width || 320, 0);
+            barGradient.addColorStop(0, chartColors.primary);
+            barGradient.addColorStop(1, chartColors.primarySoft);
+
+            window._topProductsChart = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Unidades',
+                        data,
+                        backgroundColor: barGradient,
+                        borderRadius: 12,
+                        barThickness: 16
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: context => `${context.parsed.x} uds`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { color: chartColors.grid }, ticks: { color: '#6f645a' } },
+                        y: { grid: { display: false }, ticks: { color: '#6f645a' } }
+                    }
+                }
+            });
+        }
+    } catch (e) {
+        console.warn('Chart.js no disponible o error al renderizar charts', e);
     }
 }
 
