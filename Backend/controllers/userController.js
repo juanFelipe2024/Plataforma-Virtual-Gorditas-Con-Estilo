@@ -4,8 +4,9 @@ const jwt = require("jsonwebtoken");
 
 exports.registerUser = async (req, res) => {
     try {
-        const { nombre, email, password, telefono, rol } = req.body;
+        const { nombre, email, password, telefono } = req.body;
         const emailNormalizado = email.trim().toLowerCase();
+        const rol = "cliente";
 
         const usuarioExistente = await User.findOne({ email: emailNormalizado });
         if (usuarioExistente) {
@@ -46,8 +47,9 @@ exports.registerUser = async (req, res) => {
 exports.loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
+        const emailNormalizado = email.trim().toLowerCase();
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: emailNormalizado });
         if (!user) {
             return res.status(401).json({
                 error: "Email o contraseña incorrectos"

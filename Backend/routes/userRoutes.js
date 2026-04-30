@@ -6,9 +6,10 @@ const { registerUser, loginUser, getUsers, deleteUser } = require("../controller
 const { validarRegistro, validarLogin } = require("../validators/userValidators");
 const { validar } = require("../middleware/validationMiddleware");
 const { verifyToken, verifyAdmin } = require("../middleware/authMiddleware");
+const { authLimiter } = require("../middleware/rateLimiters");
 
-router.post("/register", validarRegistro, validar, registerUser);
-router.post("/login", validarLogin, validar, loginUser);
+router.post("/register", authLimiter, validarRegistro, validar, registerUser);
+router.post("/login", authLimiter, validarLogin, validar, loginUser);
 
 // Rutas administrativas: listar y eliminar usuarios
 router.get("/", verifyToken, verifyAdmin, getUsers);

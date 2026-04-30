@@ -23,7 +23,10 @@ console.log("✅ Variables de entorno verificadas correctamente");
 
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 const connectDB = require("./config/db");
+const { baseLimiter } = require("./middleware/rateLimiters");
+const sanitizeRequest = require("./middleware/sanitizeRequest");
 
 const userRoutes = require("./routes/userRoutes");
 const productRoutes = require("./routes/productRoutes");
@@ -33,8 +36,39 @@ const orderRoutes = require("./routes/orderRoutes");
 const app = express();
 connectDB();
 
-app.use(cors());
-app.use(express.json());
+app.disable("x-powered-by");
+
+if (process.env.TRUST_PROXY === "1") {
+    app.set("trust proxy", 1);
+}
+
+const allowedOrigins = (process.env.CORS_ORIGIN || "")
+    .split(",")
+    .map(origin => origin.trim())
+    .filter(Boolean);
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        if (!origin) {
+            return callback(null, true);
+        }
+
+        if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
+        return callback(new Error("Not allowed by CORS"));
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    optionsSuccessStatus: 204
+};
+
+app.use(helmet());
+app.use(cors(corsOptions));
+app.use(express.json({ limit: "100kb" }));
+app.use(sanitizeRequest);
+app.use(baseLimiter);
 
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
