@@ -4,192 +4,201 @@ let statsCache = null;
 let statsRangeDays = 30;
 
 document.addEventListener("DOMContentLoaded", () => {
-    verificarAdmin();
-    configurarPestanasAdmin();
-    configurarFiltroRango();
-    cargarPedidos();
-    cargarProductos();
-    cargarEstadisticas();
+  verificarAdmin();
+  configurarPestanasAdmin();
+  configurarFiltroRango();
+  cargarPedidos();
+  cargarProductos();
+  cargarEstadisticas();
 
-    document.getElementById("nav-logout").addEventListener("click", cerrarSesion);
-    document.getElementById("btn-agregar").addEventListener("click", agregarProducto);
+  document.getElementById("nav-logout").addEventListener("click", cerrarSesion);
+  document
+    .getElementById("btn-agregar")
+    .addEventListener("click", agregarProducto);
 });
 
 function configurarPestanasAdmin() {
-    const tabs = document.querySelectorAll(".admin-tab");
-    const panels = document.querySelectorAll(".admin-panel");
+  const tabs = document.querySelectorAll(".admin-tab");
+  const panels = document.querySelectorAll(".admin-panel");
 
-    tabs.forEach(tab => {
-        tab.addEventListener("click", () => {
-            const panelId = tab.dataset.panel;
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const panelId = tab.dataset.panel;
 
-            tabs.forEach(item => item.classList.remove("active"));
-            panels.forEach(panel => {
-                const isActive = panel.id === panelId;
-                panel.classList.toggle("active", isActive);
-                panel.hidden = !isActive;
-            });
+      tabs.forEach((item) => item.classList.remove("active"));
+      panels.forEach((panel) => {
+        const isActive = panel.id === panelId;
+        panel.classList.toggle("active", isActive);
+        panel.hidden = !isActive;
+      });
 
-            tab.classList.add("active");
+      tab.classList.add("active");
 
-            // Si se abrió la pestaña de usuarios, cargar listado
-            if (panelId === 'panel-usuarios') cargarUsuarios();
-            if (panelId === 'panel-stats') cargarEstadisticas();
-        });
+      // Si se abrió la pestaña de usuarios, cargar listado
+      if (panelId === "panel-usuarios") cargarUsuarios();
+      if (panelId === "panel-stats") cargarEstadisticas();
     });
+  });
 }
 
 function configurarFiltroRango() {
-    const rangeSelect = document.getElementById("stats-range");
-    if (!rangeSelect || rangeSelect.dataset.bound) return;
+  const rangeSelect = document.getElementById("stats-range");
+  if (!rangeSelect || rangeSelect.dataset.bound) return;
 
-    rangeSelect.dataset.bound = "true";
+  rangeSelect.dataset.bound = "true";
+  statsRangeDays = Number(rangeSelect.value) || 30;
+  actualizarTituloRango(statsRangeDays);
+
+  rangeSelect.addEventListener("change", () => {
     statsRangeDays = Number(rangeSelect.value) || 30;
     actualizarTituloRango(statsRangeDays);
-
-    rangeSelect.addEventListener("change", () => {
-        statsRangeDays = Number(rangeSelect.value) || 30;
-        actualizarTituloRango(statsRangeDays);
-        if (statsCache) renderizarCharts(statsCache, statsRangeDays);
-    });
+    if (statsCache) renderizarCharts(statsCache, statsRangeDays);
+  });
 }
 
 function actualizarTituloRango(rangeDays) {
-    const revenueTitle = document.getElementById("stats-revenue-title");
-    if (revenueTitle) revenueTitle.textContent = `Ingresos últimos ${rangeDays} días`;
+  const revenueTitle = document.getElementById("stats-revenue-title");
+  if (revenueTitle)
+    revenueTitle.textContent = `Ingresos últimos ${rangeDays} días`;
 }
 
 function filtrarRevenuePorRango(stats, rangeDays) {
-    const source = stats && stats.revenueByDay ? stats.revenueByDay : [];
-    if (!rangeDays || source.length <= rangeDays) return source;
-    return source.slice(-rangeDays);
+  const source = stats && stats.revenueByDay ? stats.revenueByDay : [];
+  if (!rangeDays || source.length <= rangeDays) return source;
+  return source.slice(-rangeDays);
 }
 
 function verificarAdmin() {
-    const token = localStorage.getItem("token");
-    const usuario = JSON.parse(localStorage.getItem("usuario"));
+  const token = localStorage.getItem("token");
+  const usuario = JSON.parse(localStorage.getItem("usuario"));
 
-    if (!token || !usuario) {
-        window.location.href = "login.html";
-        return;
-    }
+  if (!token || !usuario) {
+    window.location.href = "login.html";
+    return;
+  }
 
-    if (usuario.rol !== "admin") {
-        window.location.href = "index.html";
-        return;
-    }
+  if (usuario.rol !== "admin") {
+    window.location.href = "index.html";
+    return;
+  }
 
-    document.getElementById("nav-usuario").textContent = `Hola, ${usuario.nombre}`;
+  document.getElementById("nav-usuario").textContent =
+    `Hola, ${usuario.nombre}`;
 }
 
 function cerrarSesion() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("usuario");
-    window.location.href = "login.html";
+  localStorage.removeItem("token");
+  localStorage.removeItem("usuario");
+  window.location.href = "login.html";
 }
 
 async function agregarProducto() {
-    const token = localStorage.getItem("token");
-    const errorDiv = document.getElementById("error-message");
-    const successDiv = document.getElementById("success-message");
+  const token = localStorage.getItem("token");
+  const errorDiv = document.getElementById("error-message");
+  const successDiv = document.getElementById("success-message");
 
-    errorDiv.classList.add("hidden");
-    successDiv.classList.add("hidden");
+  errorDiv.classList.add("hidden");
+  successDiv.classList.add("hidden");
 
-    const nombre = document.getElementById("nombre").value.trim();
-    const precio = document.getElementById("precio").value.trim();
-    const descripcion = document.getElementById("descripcion").value.trim();
-    const categoria = document.getElementById("categoria").value.trim();
-    const color = document.getElementById("color").value.trim();
-    const tallasInput = document.getElementById("tallas").value.trim();
-    const stock = document.getElementById("stock").value.trim();
-    const imagen = document.getElementById("imagen").value.trim();
+  const nombre = document.getElementById("nombre").value.trim();
+  const precio = document.getElementById("precio").value.trim();
+  const descripcion = document.getElementById("descripcion").value.trim();
+  const categoria = document.getElementById("categoria").value.trim();
+  const color = document.getElementById("color").value.trim();
+  const tallasInput = document.getElementById("tallas").value.trim();
+  const stock = document.getElementById("stock").value.trim();
+  const imagen = document.getElementById("imagen").value.trim();
 
-    if (!nombre || !precio || !stock) {
-        errorDiv.textContent = "Nombre, precio y stock son obligatorios";
-        errorDiv.classList.remove("hidden");
-        return;
+  if (!nombre || !precio || !stock) {
+    errorDiv.textContent = "Nombre, precio y stock son obligatorios";
+    errorDiv.classList.remove("hidden");
+    return;
+  }
+
+  const tallas = tallasInput
+    .split(",")
+    .map((t) => t.trim())
+    .filter((t) => t !== "");
+
+  try {
+    const response = await fetch(`${API_URL}/products`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        nombre,
+        precio: Number(precio),
+        descripcion,
+        categoria,
+        color,
+        tallas,
+        stock: Number(stock),
+        imagen,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      successDiv.textContent = "Producto agregado correctamente";
+      successDiv.classList.remove("hidden");
+      limpiarFormulario();
+      cargarProductos();
+    } else {
+      errorDiv.textContent = data.error;
+      errorDiv.classList.remove("hidden");
     }
-
-    const tallas = tallasInput.split(",").map(t => t.trim()).filter(t => t !== "");
-
-    try {
-        const response = await fetch(`${API_URL}/products`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                nombre,
-                precio: Number(precio),
-                descripcion,
-                categoria,
-                color,
-                tallas,
-                stock: Number(stock),
-                imagen
-            })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            successDiv.textContent = "Producto agregado correctamente";
-            successDiv.classList.remove("hidden");
-            limpiarFormulario();
-            cargarProductos();
-        } else {
-            errorDiv.textContent = data.error;
-            errorDiv.classList.remove("hidden");
-        }
-
-    } catch (error) {
-        errorDiv.textContent = "Error de conexión, intenta de nuevo";
-        errorDiv.classList.remove("hidden");
-    }
+  } catch (error) {
+    errorDiv.textContent = "Error de conexión, intenta de nuevo";
+    errorDiv.classList.remove("hidden");
+  }
 }
 
 function limpiarFormulario() {
-    document.getElementById("nombre").value = "";
-    document.getElementById("precio").value = "";
-    document.getElementById("descripcion").value = "";
-    document.getElementById("categoria").value = "";
-    document.getElementById("color").value = "";
-    document.getElementById("tallas").value = "";
-    document.getElementById("stock").value = "";
-    document.getElementById("imagen").value = "";
+  document.getElementById("nombre").value = "";
+  document.getElementById("precio").value = "";
+  document.getElementById("descripcion").value = "";
+  document.getElementById("categoria").value = "";
+  document.getElementById("color").value = "";
+  document.getElementById("tallas").value = "";
+  document.getElementById("stock").value = "";
+  document.getElementById("imagen").value = "";
 }
 
 async function cargarPedidos() {
-    const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
 
-    try {
-        const response = await fetch(`${API_URL}/orders`, {
-            headers: { "Authorization": `Bearer ${token}` }
+  try {
+    const response = await fetch(`${API_URL}/orders`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const pedidos = await response.json();
+    const container = document.getElementById("pedidos-container");
+
+    actualizarResumenAdmin(pedidos, null);
+
+    if (pedidos.length === 0) {
+      container.innerHTML = "<p style='color:#888'>No hay pedidos todavía.</p>";
+      return;
+    }
+
+    container.innerHTML = pedidos
+      .map((pedido) => {
+        const fecha = new Date(pedido.fecha).toLocaleDateString("es-CO", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
         });
 
-        const pedidos = await response.json();
-        const container = document.getElementById("pedidos-container");
-
-        actualizarResumenAdmin(pedidos, null);
-
-        if (pedidos.length === 0) {
-            container.innerHTML = "<p style='color:#888'>No hay pedidos todavía.</p>";
-            return;
-        }
-
-        container.innerHTML = pedidos.map(pedido => {
-            const fecha = new Date(pedido.fecha).toLocaleDateString("es-CO", {
-                year: "numeric", month: "long", day: "numeric"
-            });
-
-            return `
+        return `
                 <div class="pedido-card" id="pedido-${pedido._id}">
                     <div class="pedido-header">
                         <div>
                             <span class="pedido-cliente">
-                                ${pedido.usuario.nombre} — ${pedido.usuario.email}
+                                ${pedido.usuarioNombre} — ${pedido.usuarioEmail}
                             </span>
                             <p class="pedido-fecha">${fecha}</p>
                         </div>
@@ -197,229 +206,272 @@ async function cargarPedidos() {
                     </div>
 
                     <div class="pedido-productos">
-                        ${pedido.productos.map(p =>
-                            `${p.nombre} x${p.cantidad}`
-                        ).join(", ")}
+                        ${pedido.productos
+                          .map((p) => `${p.nombre} x${p.cantidad}`)
+                          .join(", ")}
                     </div>
 
                     <div class="pedido-estado-row">
                         <select
                             class="select-estado estado-${pedido.estado}"
                             onchange="actualizarEstado('${pedido._id}', this)">
-                            <option value="pendiente"   ${pedido.estado === "pendiente"   ? "selected" : ""}>Pendiente</option>
-                            <option value="confirmado"  ${pedido.estado === "confirmado"  ? "selected" : ""}>Confirmado</option>
-                            <option value="cancelado"   ${pedido.estado === "cancelado"   ? "selected" : ""}>Cancelado</option>
+                            <option value="pendiente"   ${pedido.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
+                            <option value="confirmado"  ${pedido.estado === "confirmado" ? "selected" : ""}>Confirmado</option>
+                            <option value="cancelado"   ${pedido.estado === "cancelado" ? "selected" : ""}>Cancelado</option>
                         </select>
                         <span class="estado-feedback hidden" id="feedback-${pedido._id}">✓ Guardado</span>
                     </div>
                 </div>
             `;
-        }).join("");
-
-    } catch (error) {
-        console.error("Error al cargar pedidos:", error);
-    }
+      })
+      .join("");
+  } catch (error) {
+    console.error("Error al cargar pedidos:", error);
+  }
 }
 
 async function cargarEstadisticas() {
-    const token = localStorage.getItem("token");
-    if (!token) return;
+  const token = localStorage.getItem("token");
+  if (!token) return;
 
-    try {
-        const response = await fetch(`${API_URL}/orders/stats`, {
-            headers: { "Authorization": `Bearer ${token}` }
-        });
+  try {
+    const response = await fetch(`${API_URL}/orders/stats`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-        if (!response.ok) return;
+    if (!response.ok) return;
 
-        const stats = await response.json();
-        statsCache = stats;
+    const stats = await response.json();
+    statsCache = stats;
 
-        const revenueEl = document.getElementById("admin-revenue-month");
-        const topCountEl = document.getElementById("admin-top-count");
-        const topList = document.getElementById("admin-top-products-list");
+    const revenueEl = document.getElementById("admin-revenue-month");
+    const topCountEl = document.getElementById("admin-top-count");
+    const topList = document.getElementById("admin-top-products-list");
 
-        if (revenueEl) revenueEl.textContent = `$${Number(stats.revenueThisMonth || 0).toLocaleString()}`;
-        if (topCountEl) topCountEl.textContent = stats.topProducts && stats.topProducts.length ? stats.topProducts.length : "—";
+    if (revenueEl)
+      revenueEl.textContent = `$${Number(stats.revenueThisMonth || 0).toLocaleString()}`;
+    if (topCountEl)
+      topCountEl.textContent =
+        stats.topProducts && stats.topProducts.length
+          ? stats.topProducts.length
+          : "—";
 
-        if (topList) {
-            topList.innerHTML = (stats.topProducts || []).map((p, i) =>
-                `<li>${i + 1}. ${p.nombre || 'Sin nombre'} — ${p.totalCantidad || 0} uds — $${Number(p.totalRevenue || 0).toLocaleString()}</li>`
-            ).join("");
-        }
-
-        // Render para nueva pestaña de estadísticas
-        const statRevenueMonth = document.getElementById("stat-revenue-month");
-        const statOrdersMonth = document.getElementById("stat-orders-month");
-        const statTopProduct = document.getElementById("stat-top-product");
-        const statsTopProducts = document.getElementById("stats-top-products");
-
-        if (statRevenueMonth) statRevenueMonth.textContent = `$${Number(stats.revenueThisMonth || 0).toLocaleString()}`;
-        if (statOrdersMonth) statOrdersMonth.textContent = stats.ordersCountThisMonth || 0;
-        if (statTopProduct) statTopProduct.textContent = (stats.topProducts && stats.topProducts[0]) ? `${stats.topProducts[0].nombre} — ${stats.topProducts[0].totalCantidad} uds` : '—';
-
-        // Lista top productos en panel
-        if (statsTopProducts) {
-            statsTopProducts.innerHTML = (stats.topProducts || []).map((p, i) =>
-                `<li style="margin-bottom:6px"><strong style="color:#3b2b24">${i+1}. ${p.nombre || 'Sin nombre'}</strong> — ${p.totalCantidad || 0} uds — $${Number(p.totalRevenue || 0).toLocaleString()}</li>`
-            ).join("");
-        }
-
-        renderizarCharts(stats, statsRangeDays);
-
-        // Botón exportar CSV
-        const btnExport = document.getElementById('btn-export-csv');
-        if (btnExport) {
-            btnExport.onclick = () => {
-                const rows = [];
-                rows.push(['fecha', 'revenue', 'orders']);
-                const filtered = filtrarRevenuePorRango(stats, statsRangeDays);
-                filtered.forEach(r => rows.push([r._id, r.revenue, r.orders]));
-                const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'estadisticas_ventas.csv';
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                URL.revokeObjectURL(url);
-            };
-        }
-
-    } catch (error) {
-        console.error("Error al cargar estadísticas:", error);
+    if (topList) {
+      topList.innerHTML = (stats.topProducts || [])
+        .map(
+          (p, i) =>
+            `<li>${i + 1}. ${p.nombre || "Sin nombre"} — ${p.totalCantidad || 0} uds — $${Number(p.totalRevenue || 0).toLocaleString()}</li>`,
+        )
+        .join("");
     }
+
+    // Render para nueva pestaña de estadísticas
+    const statRevenueMonth = document.getElementById("stat-revenue-month");
+    const statOrdersMonth = document.getElementById("stat-orders-month");
+    const statTopProduct = document.getElementById("stat-top-product");
+    const statsTopProducts = document.getElementById("stats-top-products");
+
+    if (statRevenueMonth)
+      statRevenueMonth.textContent = `$${Number(stats.revenueThisMonth || 0).toLocaleString()}`;
+    if (statOrdersMonth)
+      statOrdersMonth.textContent = stats.ordersCountThisMonth || 0;
+    if (statTopProduct)
+      statTopProduct.textContent =
+        stats.topProducts && stats.topProducts[0]
+          ? `${stats.topProducts[0].nombre} — ${stats.topProducts[0].totalCantidad} uds`
+          : "—";
+
+    // Lista top productos en panel
+    if (statsTopProducts) {
+      statsTopProducts.innerHTML = (stats.topProducts || [])
+        .map(
+          (p, i) =>
+            `<li style="margin-bottom:6px"><strong style="color:#3b2b24">${i + 1}. ${p.nombre || "Sin nombre"}</strong> — ${p.totalCantidad || 0} uds — $${Number(p.totalRevenue || 0).toLocaleString()}</li>`,
+        )
+        .join("");
+    }
+
+    renderizarCharts(stats, statsRangeDays);
+
+    // Botón exportar CSV
+    const btnExport = document.getElementById("btn-export-csv");
+    if (btnExport) {
+      btnExport.onclick = () => {
+        const rows = [];
+        rows.push(["fecha", "revenue", "orders"]);
+        const filtered = filtrarRevenuePorRango(stats, statsRangeDays);
+        filtered.forEach((r) => rows.push([r._id, r.revenue, r.orders]));
+        const csv = rows
+          .map((r) =>
+            r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","),
+          )
+          .join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "estadisticas_ventas.csv";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      };
+    }
+  } catch (error) {
+    console.error("Error al cargar estadísticas:", error);
+  }
 }
 
 function renderizarCharts(stats, rangeDays) {
-    if (!stats) return;
+  if (!stats) return;
 
-    actualizarTituloRango(rangeDays);
+  actualizarTituloRango(rangeDays);
 
-    try {
-        const formatCurrency = value => `$${Number(value || 0).toLocaleString()}`;
-        const chartColors = {
-            accent: 'rgba(15,118,110,0.9)',
-            accentSoft: 'rgba(15,118,110,0.18)',
-            primary: 'rgba(211,86,58,0.9)',
-            primarySoft: 'rgba(211,86,58,0.18)',
-            grid: 'rgba(160,140,120,0.18)'
-        };
+  try {
+    const formatCurrency = (value) => `$${Number(value || 0).toLocaleString()}`;
+    const chartColors = {
+      accent: "rgba(15,118,110,0.9)",
+      accentSoft: "rgba(15,118,110,0.18)",
+      primary: "rgba(211,86,58,0.9)",
+      primarySoft: "rgba(211,86,58,0.18)",
+      grid: "rgba(160,140,120,0.18)",
+    };
 
-        const revenueCanvas = document.getElementById('chart-revenue');
-        if (revenueCanvas) {
-            const filtered = filtrarRevenuePorRango(stats, rangeDays);
-            const labels = filtered.map(r => r._id);
-            const data = filtered.map(r => r.revenue || 0);
-            if (window._revenueChart) window._revenueChart.destroy();
+    const revenueCanvas = document.getElementById("chart-revenue");
+    if (revenueCanvas) {
+      const filtered = filtrarRevenuePorRango(stats, rangeDays);
+      const labels = filtered.map((r) => r._id);
+      const data = filtered.map((r) => r.revenue || 0);
+      if (window._revenueChart) window._revenueChart.destroy();
 
-            const ctx = revenueCanvas.getContext('2d');
-            const gradient = ctx.createLinearGradient(0, 0, 0, revenueCanvas.height || 220);
-            gradient.addColorStop(0, 'rgba(15,118,110,0.35)');
-            gradient.addColorStop(1, 'rgba(15,118,110,0.03)');
+      const ctx = revenueCanvas.getContext("2d");
+      const gradient = ctx.createLinearGradient(
+        0,
+        0,
+        0,
+        revenueCanvas.height || 220,
+      );
+      gradient.addColorStop(0, "rgba(15,118,110,0.35)");
+      gradient.addColorStop(1, "rgba(15,118,110,0.03)");
 
-            window._revenueChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: 'Ingresos diarios',
-                        data,
-                        borderColor: chartColors.accent,
-                        backgroundColor: gradient,
-                        fill: true,
-                        tension: 0.35,
-                        pointRadius: 3,
-                        pointHoverRadius: 5,
-                        pointBackgroundColor: '#fff',
-                        pointBorderColor: chartColors.accent
-                    }]
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    interaction: { intersect: false, mode: 'index' },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: context => `${formatCurrency(context.parsed.y)}`
-                            }
-                        }
-                    },
-                    scales: {
-                        x: { grid: { display: false }, ticks: { color: '#6f645a' } },
-                        y: {
-                            grid: { color: chartColors.grid },
-                            ticks: { callback: value => formatCurrency(value), color: '#6f645a' }
-                        }
-                    }
-                }
-            });
-        }
-
-        const topCanvas = document.getElementById('chart-top-products');
-        if (topCanvas) {
-            const topItems = (stats.topProducts || []).slice(0, 6);
-            const labels = topItems.map(p => p.nombre || 'Sin nombre');
-            const data = topItems.map(p => p.totalCantidad || 0);
-            if (window._topProductsChart) window._topProductsChart.destroy();
-
-            const ctx2 = topCanvas.getContext('2d');
-            const barGradient = ctx2.createLinearGradient(0, 0, topCanvas.width || 320, 0);
-            barGradient.addColorStop(0, chartColors.primary);
-            barGradient.addColorStop(1, chartColors.primarySoft);
-
-            window._topProductsChart = new Chart(ctx2, {
-                type: 'bar',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: 'Unidades',
-                        data,
-                        backgroundColor: barGradient,
-                        borderRadius: 12,
-                        barThickness: 16
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: context => `${context.parsed.x} uds`
-                            }
-                        }
-                    },
-                    scales: {
-                        x: { grid: { color: chartColors.grid }, ticks: { color: '#6f645a' } },
-                        y: { grid: { display: false }, ticks: { color: '#6f645a' } }
-                    }
-                }
-            });
-        }
-    } catch (e) {
-        console.warn('Chart.js no disponible o error al renderizar charts', e);
+      window._revenueChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Ingresos diarios",
+              data,
+              borderColor: chartColors.accent,
+              backgroundColor: gradient,
+              fill: true,
+              tension: 0.35,
+              pointRadius: 3,
+              pointHoverRadius: 5,
+              pointBackgroundColor: "#fff",
+              pointBorderColor: chartColors.accent,
+            },
+          ],
+        },
+        options: {
+          maintainAspectRatio: false,
+          interaction: { intersect: false, mode: "index" },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (context) => `${formatCurrency(context.parsed.y)}`,
+              },
+            },
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: "#6f645a" } },
+            y: {
+              grid: { color: chartColors.grid },
+              ticks: {
+                callback: (value) => formatCurrency(value),
+                color: "#6f645a",
+              },
+            },
+          },
+        },
+      });
     }
+
+    const topCanvas = document.getElementById("chart-top-products");
+    if (topCanvas) {
+      const topItems = (stats.topProducts || []).slice(0, 6);
+      const labels = topItems.map((p) => p.nombre || "Sin nombre");
+      const data = topItems.map((p) => p.totalCantidad || 0);
+      if (window._topProductsChart) window._topProductsChart.destroy();
+
+      const ctx2 = topCanvas.getContext("2d");
+      const barGradient = ctx2.createLinearGradient(
+        0,
+        0,
+        topCanvas.width || 320,
+        0,
+      );
+      barGradient.addColorStop(0, chartColors.primary);
+      barGradient.addColorStop(1, chartColors.primarySoft);
+
+      window._topProductsChart = new Chart(ctx2, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Unidades",
+              data,
+              backgroundColor: barGradient,
+              borderRadius: 12,
+              barThickness: 16,
+            },
+          ],
+        },
+        options: {
+          indexAxis: "y",
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (context) => `${context.parsed.x} uds`,
+              },
+            },
+          },
+          scales: {
+            x: {
+              grid: { color: chartColors.grid },
+              ticks: { color: "#6f645a" },
+            },
+            y: { grid: { display: false }, ticks: { color: "#6f645a" } },
+          },
+        },
+      });
+    }
+  } catch (e) {
+    console.warn("Chart.js no disponible o error al renderizar charts", e);
+  }
 }
 
 async function cargarProductos() {
-    try {
-        const response = await fetch(`${API_URL}/products`);
-        const productos = await response.json();
-        const container = document.getElementById("productos-container");
+  try {
+    const response = await fetch(`${API_URL}/products`);
+    const productos = await response.json();
+    const container = document.getElementById("productos-container");
 
-        actualizarResumenAdmin(null, productos);
+    actualizarResumenAdmin(null, productos);
 
-        if (productos.length === 0) {
-            container.innerHTML = "<p class='carrito-vacio'>No hay productos en el catálogo.</p>";
-            return;
-        }
+    if (productos.length === 0) {
+      container.innerHTML =
+        "<p class='carrito-vacio'>No hay productos en el catálogo.</p>";
+      return;
+    }
 
-        container.innerHTML = productos.map((producto, index) => `
+    container.innerHTML = productos
+      .map(
+        (producto, index) => `
             <div class="admin-producto-card" style="--i:${index}">
                 <div class="admin-producto-info">
                     <strong>${producto.nombre}</strong>
@@ -437,256 +489,266 @@ async function cargarProductos() {
                     </button>
                 </div>
             </div>
-        `).join("");
-
-    } catch (error) {
-        console.error("Error al cargar productos:", error);
-    }
+        `,
+      )
+      .join("");
+  } catch (error) {
+    console.error("Error al cargar productos:", error);
+  }
 }
 
 async function cargarUsuarios() {
-    const token = localStorage.getItem("token");
-    const container = document.getElementById("usuarios-container");
+  const token = localStorage.getItem("token");
+  const container = document.getElementById("usuarios-container");
 
-    if (!token) {
-        container.innerHTML = "<p style='color:#888'>Acceso no autorizado.</p>";
-        return;
+  if (!token) {
+    container.innerHTML = "<p style='color:#888'>Acceso no autorizado.</p>";
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/users`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) {
+      container.innerHTML =
+        "<p style='color:#888'>No se pueden obtener los usuarios.</p>";
+      return;
     }
 
-    try {
-        const response = await fetch(`${API_URL}/users`, {
-            headers: { "Authorization": `Bearer ${token}` }
-        });
+    const users = await response.json();
 
-        if (!response.ok) {
-            container.innerHTML = "<p style='color:#888'>No se pueden obtener los usuarios.</p>";
-            return;
-        }
+    if (!Array.isArray(users) || users.length === 0) {
+      container.innerHTML =
+        "<p style='color:#888'>No hay usuarios registrados.</p>";
+      return;
+    }
 
-        const users = await response.json();
-
-        if (!Array.isArray(users) || users.length === 0) {
-            container.innerHTML = "<p style='color:#888'>No hay usuarios registrados.</p>";
-            return;
-        }
-
-        container.innerHTML = users.map(user => `
+    container.innerHTML = users
+      .map(
+        (user) => `
             <div class="admin-producto-card">
                 <div class="admin-producto-info">
                     <strong>${user.nombre}</strong>
                     <p>${user.email}</p>
-                    <p style="color:var(--muted)">Rol: ${user.rol || 'cliente'}</p>
+                    <p style="color:var(--muted)">Rol: ${user.rol || "cliente"}</p>
                 </div>
                 <div style="display:flex;gap:8px;">
                     <button class="btn-eliminar-producto" onclick="eliminarUsuario('${user._id}')">Eliminar</button>
                 </div>
             </div>
-        `).join("");
-
-    } catch (error) {
-        console.error("Error al cargar usuarios:", error);
-        container.innerHTML = "<p style='color:#888'>Error de conexión al obtener usuarios.</p>";
-    }
+        `,
+      )
+      .join("");
+  } catch (error) {
+    console.error("Error al cargar usuarios:", error);
+    container.innerHTML =
+      "<p style='color:#888'>Error de conexión al obtener usuarios.</p>";
+  }
 }
 
 async function eliminarUsuario(userId) {
-    const token = localStorage.getItem("token");
-    if (!confirm("¿Estás seguro de eliminar este usuario?")) return;
+  const token = localStorage.getItem("token");
+  if (!confirm("¿Estás seguro de eliminar este usuario?")) return;
 
-    try {
-        const response = await fetch(`${API_URL}/users/${userId}`, {
-            method: "DELETE",
-            headers: { "Authorization": `Bearer ${token}` }
-        });
+  try {
+    const response = await fetch(`${API_URL}/users/${userId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-        if (response.ok) {
-            cargarUsuarios();
-        } else {
-            const data = await response.json();
-            alert(data.error || 'No fue posible eliminar el usuario');
-        }
-
-    } catch (error) {
-        alert("Error de conexión, intenta de nuevo");
+    if (response.ok) {
+      cargarUsuarios();
+    } else {
+      const data = await response.json();
+      alert(data.error || "No fue posible eliminar el usuario");
     }
+  } catch (error) {
+    alert("Error de conexión, intenta de nuevo");
+  }
 }
 
 function actualizarResumenAdmin(pedidos, productos) {
-    const pedidosTotal = document.getElementById("admin-total-pedidos");
-    const productosTotal = document.getElementById("admin-total-productos");
-    const pendientesTotal = document.getElementById("admin-pedidos-pendientes");
+  const pedidosTotal = document.getElementById("admin-total-pedidos");
+  const productosTotal = document.getElementById("admin-total-productos");
+  const pendientesTotal = document.getElementById("admin-pedidos-pendientes");
 
-    if (Array.isArray(pedidos)) {
-        pedidosTotal.textContent = pedidos.length;
-        pendientesTotal.textContent = pedidos.filter(pedido => pedido.estado === "pendiente").length;
-    }
+  if (Array.isArray(pedidos)) {
+    pedidosTotal.textContent = pedidos.length;
+    pendientesTotal.textContent = pedidos.filter(
+      (pedido) => pedido.estado === "pendiente",
+    ).length;
+  }
 
-    if (Array.isArray(productos)) {
-        productosTotal.textContent = productos.length;
-    }
+  if (Array.isArray(productos)) {
+    productosTotal.textContent = productos.length;
+  }
 }
 
 async function eliminarProducto(productoId) {
-    const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
 
-    if (!confirm("¿Estás seguro de eliminar este producto?")) return;
+  if (!confirm("¿Estás seguro de eliminar este producto?")) return;
 
-    try {
-        const response = await fetch(`${API_URL}/products/${productoId}`, {
-            method: "DELETE",
-            headers: { "Authorization": `Bearer ${token}` }
-        });
+  try {
+    const response = await fetch(`${API_URL}/products/${productoId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-        if (response.ok) {
-            cargarProductos();
-        }
-
-    } catch (error) {
-        alert("Error de conexión, intenta de nuevo");
+    if (response.ok) {
+      cargarProductos();
     }
+  } catch (error) {
+    alert("Error de conexión, intenta de nuevo");
+  }
 }
 
 async function actualizarEstado(pedidoId, selectEl) {
-    const token = localStorage.getItem("token");
-    const nuevoEstado = selectEl.value;
+  const token = localStorage.getItem("token");
+  const nuevoEstado = selectEl.value;
 
-    // Actualizar color del select inmediatamente
-    selectEl.className = `select-estado estado-${nuevoEstado}`;
+  // Actualizar color del select inmediatamente
+  selectEl.className = `select-estado estado-${nuevoEstado}`;
 
-    try {
-        const response = await fetch(`${API_URL}/orders/${pedidoId}/estado`, {
-            method: "PATCH",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify({ estado: nuevoEstado })
-        });
+  try {
+    const response = await fetch(`${API_URL}/orders/${pedidoId}/estado`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ estado: nuevoEstado }),
+    });
 
-        if (response.ok) {
-            const feedback = document.getElementById(`feedback-${pedidoId}`);
-            feedback.classList.remove("hidden");
-            setTimeout(() => feedback.classList.add("hidden"), 2000);
-            cargarEstadisticas();
-        } else {
-            alert("Error al actualizar el estado");
-            cargarPedidos();
-        }
-
-    } catch (error) {
-        alert("Error de conexión, intenta de nuevo");
-        cargarPedidos();
+    if (response.ok) {
+      const feedback = document.getElementById(`feedback-${pedidoId}`);
+      feedback.classList.remove("hidden");
+      setTimeout(() => feedback.classList.add("hidden"), 2000);
+      cargarEstadisticas();
+    } else {
+      alert("Error al actualizar el estado");
+      cargarPedidos();
     }
+  } catch (error) {
+    alert("Error de conexión, intenta de nuevo");
+    cargarPedidos();
+  }
 }
 
 async function abrirModalEditar(productoId) {
-    productoEditandoId = productoId;
+  productoEditandoId = productoId;
 
-    // Limpiar mensajes previos
-    document.getElementById("editar-error").classList.add("hidden");
-    document.getElementById("editar-success").classList.add("hidden");
+  // Limpiar mensajes previos
+  document.getElementById("editar-error").classList.add("hidden");
+  document.getElementById("editar-success").classList.add("hidden");
 
-    try {
-        const response = await fetch(`${API_URL}/products/${productoId}`);
-        const producto = await response.json();
+  try {
+    const response = await fetch(`${API_URL}/products/${productoId}`);
+    const producto = await response.json();
 
-        // Precargar los datos actuales
-        document.getElementById("editar-nombre").value      = producto.nombre || "";
-        document.getElementById("editar-precio").value      = producto.precio || "";
-        document.getElementById("editar-descripcion").value = producto.descripcion || "";
-        document.getElementById("editar-categoria").value   = producto.categoria || "";
-        document.getElementById("editar-color").value       = producto.color || "";
-        document.getElementById("editar-tallas").value      = producto.tallas?.join(", ") || "";
-        document.getElementById("editar-stock").value       = producto.stock || "";
-        document.getElementById("editar-imagen").value      = producto.imagen || "";
+    // Precargar los datos actuales
+    document.getElementById("editar-nombre").value = producto.nombre || "";
+    document.getElementById("editar-precio").value = producto.precio || "";
+    document.getElementById("editar-descripcion").value =
+      producto.descripcion || "";
+    document.getElementById("editar-categoria").value =
+      producto.categoria || "";
+    document.getElementById("editar-color").value = producto.color || "";
+    document.getElementById("editar-tallas").value =
+      producto.tallas?.join(", ") || "";
+    document.getElementById("editar-stock").value = producto.stock || "";
+    document.getElementById("editar-imagen").value = producto.imagen || "";
 
-        // Mostrar preview de la imagen actual
-        const preview = document.getElementById("editar-preview");
-        if (producto.imagen) {
-            preview.src = producto.imagen;
-            preview.style.display = "block";
-        } else {
-            preview.style.display = "none";
-        }
-
-        // Actualizar preview cuando cambie la URL
-        document.getElementById("editar-imagen").oninput = function () {
-            if (this.value) {
-                preview.src = this.value;
-                preview.style.display = "block";
-            } else {
-                preview.style.display = "none";
-            }
-        };
-
-        document.getElementById("modal-editar").classList.remove("hidden");
-
-    } catch (error) {
-        alert("Error al cargar el producto");
+    // Mostrar preview de la imagen actual
+    const preview = document.getElementById("editar-preview");
+    if (producto.imagen) {
+      preview.src = producto.imagen;
+      preview.style.display = "block";
+    } else {
+      preview.style.display = "none";
     }
+
+    // Actualizar preview cuando cambie la URL
+    document.getElementById("editar-imagen").oninput = function () {
+      if (this.value) {
+        preview.src = this.value;
+        preview.style.display = "block";
+      } else {
+        preview.style.display = "none";
+      }
+    };
+
+    document.getElementById("modal-editar").classList.remove("hidden");
+  } catch (error) {
+    alert("Error al cargar el producto");
+  }
 }
 
 function cerrarModalEditar() {
-    document.getElementById("modal-editar").classList.add("hidden");
-    productoEditandoId = null;
+  document.getElementById("modal-editar").classList.add("hidden");
+  productoEditandoId = null;
 }
 
 async function guardarEdicion() {
-    const token = localStorage.getItem("token");
-    const errorDiv   = document.getElementById("editar-error");
-    const successDiv = document.getElementById("editar-success");
+  const token = localStorage.getItem("token");
+  const errorDiv = document.getElementById("editar-error");
+  const successDiv = document.getElementById("editar-success");
 
-    errorDiv.classList.add("hidden");
-    successDiv.classList.add("hidden");
+  errorDiv.classList.add("hidden");
+  successDiv.classList.add("hidden");
 
-    const nombre = document.getElementById("editar-nombre").value.trim();
-    const precio = document.getElementById("editar-precio").value.trim();
-    const stock  = document.getElementById("editar-stock").value.trim();
+  const nombre = document.getElementById("editar-nombre").value.trim();
+  const precio = document.getElementById("editar-precio").value.trim();
+  const stock = document.getElementById("editar-stock").value.trim();
 
-    if (!nombre || !precio || !stock) {
-        errorDiv.textContent = "Nombre, precio y stock son obligatorios";
-        errorDiv.classList.remove("hidden");
-        return;
+  if (!nombre || !precio || !stock) {
+    errorDiv.textContent = "Nombre, precio y stock son obligatorios";
+    errorDiv.classList.remove("hidden");
+    return;
+  }
+
+  const tallasInput = document.getElementById("editar-tallas").value.trim();
+  const tallas = tallasInput
+    .split(",")
+    .map((t) => t.trim())
+    .filter((t) => t !== "");
+
+  const body = {
+    nombre,
+    precio: Number(precio),
+    descripcion: document.getElementById("editar-descripcion").value.trim(),
+    categoria: document.getElementById("editar-categoria").value.trim(),
+    color: document.getElementById("editar-color").value.trim(),
+    tallas,
+    stock: Number(stock),
+    imagen: document.getElementById("editar-imagen").value.trim(),
+  };
+
+  try {
+    const response = await fetch(`${API_URL}/products/${productoEditandoId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      successDiv.textContent = "Producto actualizado correctamente";
+      successDiv.classList.remove("hidden");
+      cargarProductos();
+      setTimeout(() => cerrarModalEditar(), 1500);
+    } else {
+      errorDiv.textContent = data.error;
+      errorDiv.classList.remove("hidden");
     }
-
-    const tallasInput = document.getElementById("editar-tallas").value.trim();
-    const tallas = tallasInput.split(",").map(t => t.trim()).filter(t => t !== "");
-
-    const body = {
-        nombre,
-        precio:      Number(precio),
-        descripcion: document.getElementById("editar-descripcion").value.trim(),
-        categoria:   document.getElementById("editar-categoria").value.trim(),
-        color:       document.getElementById("editar-color").value.trim(),
-        tallas,
-        stock:       Number(stock),
-        imagen:      document.getElementById("editar-imagen").value.trim()
-    };
-
-    try {
-        const response = await fetch(`${API_URL}/products/${productoEditandoId}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify(body)
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            successDiv.textContent = "Producto actualizado correctamente";
-            successDiv.classList.remove("hidden");
-            cargarProductos();
-            setTimeout(() => cerrarModalEditar(), 1500);
-        } else {
-            errorDiv.textContent = data.error;
-            errorDiv.classList.remove("hidden");
-        }
-
-    } catch (error) {
-        errorDiv.textContent = "Error de conexión, intenta de nuevo";
-        errorDiv.classList.remove("hidden");
-    }
+  } catch (error) {
+    errorDiv.textContent = "Error de conexión, intenta de nuevo";
+    errorDiv.classList.remove("hidden");
+  }
 }
