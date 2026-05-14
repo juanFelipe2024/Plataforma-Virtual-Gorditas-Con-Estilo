@@ -2,13 +2,14 @@ const API_URL = "http://localhost:3000/api";
 let productoEditandoId = null;
 let statsCache = null;
 let statsRangeDays = 30;
+let productosCache = [];
 
 document.addEventListener("DOMContentLoaded", () => {
   verificarAdmin();
   configurarPestanasAdmin();
   configurarFiltroRango();
-  cargarPedidos();
-  cargarProductos();
+  configurarBuscadorProductos();
+  cargarProductos().then(cargarPedidos);
   cargarEstadisticas();
 
   document.getElementById("nav-logout").addEventListener("click", cerrarSesion);
@@ -53,6 +54,17 @@ function configurarFiltroRango() {
     statsRangeDays = Number(rangeSelect.value) || 30;
     actualizarTituloRango(statsRangeDays);
     if (statsCache) renderizarCharts(statsCache, statsRangeDays);
+  });
+}
+
+function configurarBuscadorProductos() {
+  const searchInput = document.getElementById("admin-productos-search");
+  if (!searchInput || searchInput.dataset.bound) return;
+
+  searchInput.dataset.bound = "true";
+
+  searchInput.addEventListener("input", () => {
+    renderProductosAdmin(productosCache, searchInput.value);
   });
 }
 
@@ -193,6 +205,29 @@ async function cargarPedidos() {
           day: "numeric",
         });
 
+        const productosHTML = (pedido.productos || [])
+          .map((p) => {
+            const imagen = p.imagen || "img/placeholder.jpg";
+            const categoria = resolverCategoriaPedido(p);
+            const precio = Number(p.precio || 0);
+            const talla = p.talla || "N/A";
+            return `
+              <div class="pedido-item">
+                <img class="pedido-item-img" src="${imagen}" alt="${p.nombre}">
+                <div class="pedido-item-info">
+                  <span class="pedido-item-nombre">${p.nombre}</span>
+                  <span class="pedido-item-categoria">Categoría: ${categoria}</span>
+                  <span class="pedido-item-talla">Talla: ${talla}</span>
+                  <span class="pedido-item-cantidad">Cantidad: x${p.cantidad}</span>
+                </div>
+                <div class="pedido-item-meta">
+                  <span class="pedido-item-precio">$${precio.toLocaleString()}</span>
+                </div>
+              </div>
+            `;
+          })
+          .join("");
+
         return `
                 <div class="pedido-card" id="pedido-${pedido._id}">
                     <div class="pedido-header">
@@ -205,10 +240,8 @@ async function cargarPedidos() {
                         <span class="pedido-total">$${pedido.total.toLocaleString()}</span>
                     </div>
 
-                    <div class="pedido-productos">
-                        ${pedido.productos
-                          .map((p) => `${p.nombre} x${p.cantidad}`)
-                          .join(", ")}
+                    <div class="pedido-productos pedido-items">
+                      ${productosHTML}
                     </div>
 
                     <div class="pedido-estado-row">
@@ -228,6 +261,14 @@ async function cargarPedidos() {
   } catch (error) {
     console.error("Error al cargar pedidos:", error);
   }
+}
+
+function resolverCategoriaPedido(productoPedido) {
+  if (productoPedido.categoria) return productoPedido.categoria;
+  const match = productosCache.find(
+    (item) => item._id === productoPedido.productoId,
+  );
+  return match?.categoria || "Sin categoría";
 }
 
 async function cargarEstadisticas() {
@@ -459,24 +500,44 @@ async function cargarProductos() {
   try {
     const response = await fetch(`${API_URL}/products`);
     const productos = await response.json();
-    const container = document.getElementById("productos-container");
 
     actualizarResumenAdmin(null, productos);
 
-    if (productos.length === 0) {
-      container.innerHTML =
-        "<p class='carrito-vacio'>No hay productos en el catálogo.</p>";
-      return;
-    }
+    productosCache = Array.isArray(productos) ? productos : [];
+    renderProductosAdmin(productosCache);
+  } catch (error) {
+    console.error("Error al cargar productos:", error);
+  }
+}
 
-    container.innerHTML = productos
-      .map(
-        (producto, index) => `
+function renderProductosAdmin(productos, searchQuery = "") {
+  const container = document.getElementById("productos-container");
+  if (!container) return;
+
+  if (!productos || productos.length === 0) {
+    container.innerHTML =
+      "<p class='carrito-vacio'>No hay productos en el catálogo.</p>";
+    return;
+  }
+
+  const lista = filtrarProductosAdmin(productos, searchQuery);
+
+  if (lista.length === 0) {
+    container.innerHTML =
+      "<p class='carrito-vacio'>No hay productos que coincidan con la búsqueda.</p>";
+    return;
+  }
+
+  container.innerHTML = lista
+    .map(
+      (producto, index) => `
             <div class="admin-producto-card" style="--i:${index}">
                 <div class="admin-producto-info">
                     <strong>${producto.nombre}</strong>
                     <p>Precio: $${producto.precio.toLocaleString()} — Stock: ${producto.stock}</p>
-                    <p>Tallas: ${producto.tallas.join(", ")}</p>
+                    <p>Categoría: ${producto.categoria || "Sin categoría"}</p>
+                    <p class="admin-producto-desc">${producto.descripcion || "Sin descripción"}</p>
+                    <p>Tallas: ${(producto.tallas || []).join(", ") || "Sin tallas"}</p>
                 </div>
                 <div style="display: flex; gap: 8px;">
                     <button class="btn-editar-producto"
@@ -490,11 +551,26 @@ async function cargarProductos() {
                 </div>
             </div>
         `,
-      )
-      .join("");
-  } catch (error) {
-    console.error("Error al cargar productos:", error);
-  }
+    )
+    .join("");
+}
+
+function filtrarProductosAdmin(productos, searchQuery) {
+  const query = String(searchQuery || "")
+    .trim()
+    .toLowerCase();
+  if (!query) return productos;
+
+  return productos.filter((producto) => {
+    const nombre = String(producto.nombre || "").toLowerCase();
+    const descripcion = String(producto.descripcion || "").toLowerCase();
+    const categoria = String(producto.categoria || "").toLowerCase();
+    return (
+      nombre.includes(query) ||
+      descripcion.includes(query) ||
+      categoria.includes(query)
+    );
+  });
 }
 
 async function cargarUsuarios() {
