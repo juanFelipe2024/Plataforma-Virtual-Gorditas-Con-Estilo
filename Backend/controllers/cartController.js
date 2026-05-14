@@ -104,9 +104,7 @@ exports.confirmarCompra = async (req, res) => {
     const usuarioId = req.usuario.id;
     const metodoPago = req.body.metodoPago || "No especificado";
 
-    const carrito = await Cart.findOne({ usuario: usuarioId }).populate(
-      "productos.productoId",
-    );
+    const carrito = await Cart.findOne({ usuario: usuarioId }); // sin populate
 
     if (!carrito || carrito.productos.length === 0) {
       return res.status(400).json({
@@ -167,6 +165,16 @@ exports.confirmarCompra = async (req, res) => {
 
     carrito.productos = [];
     await carrito.save();
+
+    // envío del email que faltaba
+    if (usuario && usuario.email) {
+      await enviarConfirmacionEmail(
+        usuario.email,
+        usuario.nombre,
+        pedido,
+        metodoPago,
+      );
+    }
 
     res.status(201).json({
       message: "Compra confirmada correctamente",

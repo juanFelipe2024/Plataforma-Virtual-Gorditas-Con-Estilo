@@ -44,23 +44,24 @@ async function cargarCarrito() {
     }
 
     let total = 0;
+    // Después:
     itemsDiv.innerHTML = data.productos
       .map((item, index) => {
-        const subtotal = item.productoId.precio * item.cantidad;
+        const subtotal = item.precio * item.cantidad;
         total += subtotal;
         return `
-                <div class="carrito-item" style="--i:${index}">
-                    <img class="carrito-item-thumb" src="${item.imagen || "img/placeholder.jpg"}" alt="${item.productoId.nombre}">
-                    <div class="carrito-item-info">
-                        <p class="carrito-item-nombre">${item.nombre}</p>
-                        <p class="carrito-item-precio">$${(item.precio || 0).toLocaleString()}</p>
-                        <p class="carrito-item-cantidad">Talla: ${item.talla} — Cantidad: ${item.cantidad}</p>
-                    </div>
-                    <button class="btn-eliminar"
-                        onclick="eliminarDelCarrito('${item.productoId}', '${item.talla}')"
-                        Eliminar
-                    </button>
-                </div>`;
+        <div class="carrito-item" style="--i:${index}">
+            <img class="carrito-item-thumb" src="${item.imagen || "img/placeholder.jpg"}" alt="${item.nombre}">
+            <div class="carrito-item-info">
+                <p class="carrito-item-nombre">${item.nombre}</p>
+                <p class="carrito-item-precio">$${(item.precio || 0).toLocaleString()}</p>
+                <p class="carrito-item-cantidad">Talla: ${item.talla} — Cantidad: ${item.cantidad}</p>
+            </div>
+            <button class="btn-eliminar"
+                onclick="eliminarDelCarrito('${item.productoId}', '${item.talla}')">
+                Eliminar
+            </button>
+        </div>`;
       })
       .join("");
 
