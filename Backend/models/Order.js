@@ -17,6 +17,9 @@ const orderSchema = new mongoose.Schema({
       talla: {
         type: String,
       },
+      categoria: {
+        type: String,
+      },
       descripcion: {
         type: String,
       },

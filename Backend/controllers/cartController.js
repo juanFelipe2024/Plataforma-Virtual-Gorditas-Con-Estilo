@@ -146,6 +146,7 @@ exports.confirmarCompra = async (req, res) => {
         precio: item.precio,
         cantidad: item.cantidad,
         talla: item.talla,
+        categoria: productoActualizado.categoria,
         descripcion: productoActualizado.descripcion,
         imagen: item.imagen,
       });
